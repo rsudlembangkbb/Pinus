@@ -79,6 +79,6 @@ Buka URL Vercel Anda, login dengan akun hasil seed:
 
 Ketiga batasan ini wajar untuk tahap uji coba/demo. Kalau nanti PINUS akan dipakai operasional sungguhan oleh RSUD Lembang, sebaiknya naik ke paket berbayar (Render Starter ~$7/bulan, Supabase Pro $25/bulan) agar tidak ada jeda "bangun tidur" dan datanya tidak berisiko pause.
 
-## Kalau Anda ingin saya yang mengeksekusi deploy-nya
+## Catatan: kenapa ini harus Anda jalankan sendiri
 
-Saya tidak bisa membuat akun Vercel/Render/Supabase atas nama Anda, tapi kalau Anda sudah punya akun dan bersedia membagikan **API token/access token** (bukan password akun), saya bisa jalankan proses deploy ini langsung lewat CLI di sesi ini. Beri tahu saya kalau mau jalur ini.
+Sesi kerja Claude Code ini berjalan di sandbox dengan akses jaringan terbatas (kebijakan organisasi) — hanya boleh mengakses beberapa host tertentu lewat proxy HTTPS. `api.render.com`, `api.vercel.com`, dan `api.supabase.com` semuanya di luar daftar itu, jadi deploy tidak bisa dijalankan otomatis dari sesi ini walau Anda memberi token API. Kalau macet di langkah manapun saat mengikuti panduan ini, kirim pesan error/screenshot-nya — perbaikan kode tetap bisa dibantu dari sini.
