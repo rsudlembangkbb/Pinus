@@ -1,0 +1,47 @@
+# Render Blueprint — deploys the PINUS API as a native Node.js web service
+# (no Docker) on Render's free tier. Import this repo on render.com and
+# Render will offer to create this service automatically ("New +" →
+# "Blueprint"). Database is NOT provisioned here — use Supabase's free
+# Postgres and set DATABASE_URL/DIRECT_URL manually (see DEPLOYMENT.md).
+services:
+  - type: web
+    name: pinus-api
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: >-
+      corepack enable &&
+      corepack prepare pnpm@10.33.0 --activate &&
+      pnpm install --frozen-lockfile &&
+      pnpm --filter @pinus/shared build &&
+      pnpm --filter @pinus/api exec prisma generate &&
+      pnpm --filter @pinus/api build
+    startCommand: >-
+      pnpm --filter @pinus/api exec prisma migrate deploy &&
+      node apps/api/dist/main.js
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: CORS_ORIGIN
+        sync: false
+      - key: STORAGE_DRIVER
+        value: local
+      - key: STORAGE_LOCAL_PATH
+        value: ./storage
+      - key: SEED_ADMIN_EMAIL
+        value: admin@rsudlembang.go.id
+      - key: SEED_ADMIN_PASSWORD
+        sync: false

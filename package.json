@@ -21,7 +21,6 @@
       "@nestjs/core",
       "@prisma/client",
       "@prisma/engines",
-      "bcrypt",
       "msgpackr-extract",
       "prisma",
       "sharp",
