@@ -35,7 +35,20 @@ export class PeriodsService {
     private readonly calculationService: CalculationService,
   ) {}
 
-  findAll() {
+  /**
+   * PEGAWAI accounts get a deliberately narrow projection: only published
+   * periods, and only the fields needed to pick one to view (no budget
+   * cap/administrative budget, which are unit/management-level financial
+   * data per the PRD's confidentiality requirement).
+   */
+  findAll(role: UserRole) {
+    if (role === UserRole.PEGAWAI) {
+      return this.prisma.calculationPeriod.findMany({
+        where: { status: PeriodStatus.PUBLISHED },
+        select: { id: true, name: true, year: true, month: true, status: true, createdAt: true },
+        orderBy: [{ year: "desc" }, { month: "desc" }],
+      });
+    }
     return this.prisma.calculationPeriod.findMany({ orderBy: [{ year: "desc" }, { month: "desc" }] });
   }
 

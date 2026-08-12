@@ -15,11 +15,19 @@ export class PeriodsController {
   constructor(private readonly service: PeriodsService) {}
 
   @Get()
-  findAll() {
-    return this.service.findAll();
+  findAll(@CurrentUser() user: AuthenticatedUser) {
+    return this.service.findAll(user.role);
   }
 
   @Get(":id")
+  @Roles(
+    UserRole.SUPER_ADMIN,
+    UserRole.ADMIN_JASPEL,
+    UserRole.VERIFIKATOR_UNIT,
+    UserRole.KEUANGAN,
+    UserRole.DIREKTUR,
+    UserRole.AUDITOR,
+  )
   findOne(@Param("id") id: string) {
     return this.service.findOne(id);
   }
