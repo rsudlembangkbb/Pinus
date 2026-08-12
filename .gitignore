@@ -13,8 +13,10 @@ coverage/
 .DS_Store
 *.tsbuildinfo
 .turbo/
-storage/
-uploads/
-generated/
+# Runtime-only upload storage dir (apps/api/storage, from STORAGE_LOCAL_PATH) —
+# anchored paths so this doesn't also match source dirs like apps/api/src/storage/.
+/apps/api/storage/
+/apps/api/uploads/
+/apps/api/generated/
 .vscode/
 !.vscode/extensions.json
