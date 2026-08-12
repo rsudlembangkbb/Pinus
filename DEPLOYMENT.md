@@ -14,11 +14,13 @@ Kombinasi ini menghasilkan **link publik** yang bisa diakses siapa saja, dengan 
 
 1. Buka [supabase.com](https://supabase.com) → **New Project**. Pilih region terdekat (Singapore).
 2. Simpan **Database Password** yang Anda buat saat itu — akan dipakai di connection string.
-3. Setelah project aktif, buka **Project Settings → Database**. Anda akan melihat dua jenis connection string:
-   - **Connection pooling** (port `6543`, mode *Transaction*) → ini untuk `DATABASE_URL`. Tambahkan `?pgbouncer=true` di akhir.
-   - **Direct connection** (port `5432`) → ini untuk `DIRECT_URL`.
+3. Setelah project aktif, buka **Project Settings → Database → Connect**. Anda akan melihat **tiga** pilihan connection string — pakai yang **pooler** untuk keduanya, JANGAN pakai "Direct connection":
+   - **Transaction pooler** (port `6543`) → ini untuk `DATABASE_URL`. Tambahkan `?pgbouncer=true` di akhir.
+   - **Session pooler** (port `5432`, host pooler yang sama — bukan `db.<project>.supabase.co`) → ini untuk `DIRECT_URL`.
 
-   Contoh:
+   ⚠️ Jangan pakai opsi **"Direct connection"** (`db.<project-ref>.supabase.co:5432`) untuk `DIRECT_URL` — hostname itu sekarang hanya bisa diakses lewat IPv6, dan kebanyakan hosting gratis (termasuk Render) tidak mendukung IPv6 keluar, sehingga migrasi akan gagal dengan error `P1001: Can't reach database server`. Session pooler mendukung IPv4 dan berfungsi setara untuk keperluan migrasi.
+
+   Contoh (perhatikan keduanya memakai host `aws-0-...pooler.supabase.com`, bukan `db.xxxxx.supabase.co`):
    ```
    DATABASE_URL="postgresql://postgres.xxxxx:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
    DIRECT_URL="postgresql://postgres.xxxxx:[PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres"
