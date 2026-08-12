@@ -1,0 +1,31 @@
+{
+  "name": "pinus",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PINUS - Sistem Pembagian Insentif daN Jasa Pelayanan Untuk Semua - RSUD Lembang",
+  "scripts": {
+    "dev:api": "pnpm --filter @pinus/api start:dev",
+    "dev:web": "pnpm --filter @pinus/web dev",
+    "build": "pnpm --filter @pinus/shared build && pnpm --filter @pinus/api build && pnpm --filter @pinus/web build",
+    "db:migrate": "pnpm --filter @pinus/api prisma:migrate",
+    "db:seed": "pnpm --filter @pinus/api prisma:seed",
+    "test:api": "pnpm --filter @pinus/api test",
+    "lint": "pnpm --filter @pinus/api lint && pnpm --filter @pinus/web lint"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@nestjs/core",
+      "@prisma/client",
+      "@prisma/engines",
+      "bcrypt",
+      "msgpackr-extract",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
+}

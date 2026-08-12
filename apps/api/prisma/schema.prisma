@@ -1,0 +1,566 @@
+// PINUS — Sistem Pembagian Insentif daN Jasa Pelayanan Untuk Semua
+// RSUD Lembang | Prisma schema (PostgreSQL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums (kept in string-sync with packages/shared/src/enums.ts)
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN_JASPEL
+  VERIFIKATOR_UNIT
+  KEUANGAN
+  DIREKTUR
+  PEGAWAI
+  AUDITOR
+}
+
+enum StaffCategory {
+  MEDIS
+  KEPERAWATAN
+  NAKES_LAIN
+  ADMINISTRASI
+  STRUKTURAL
+}
+
+enum EmploymentStatus {
+  PNS
+  PPPK
+  NON_ASN
+}
+
+enum ServiceGuaranteeStatus {
+  JKN
+  NON_JKN
+}
+
+enum ServiceRole {
+  DPJP
+  OPERATOR
+  CO_OPERATOR
+  ANESTESI
+  PELAKSANA
+}
+
+enum ImportBatchType {
+  SERVICE_TRANSACTION
+  ATTENDANCE
+  PERFORMANCE_SCORE
+  INDEXING_SCORE
+}
+
+enum ImportBatchStatus {
+  UPLOADED
+  VALIDATING
+  VALIDATED
+  VALIDATION_FAILED
+  COMMITTED
+}
+
+enum ImportRowStatus {
+  PENDING
+  VALID
+  INVALID
+  COMMITTED
+}
+
+enum PeriodStatus {
+  DRAFT
+  PROCESSING
+  CALCULATED
+  UNIT_VERIFICATION
+  FINANCE_VERIFICATION
+  DIRECTOR_APPROVAL
+  FINAL
+  PUBLISHED
+}
+
+enum ApprovalStage {
+  UNIT_VERIFICATION
+  FINANCE_VERIFICATION
+  DIRECTOR_APPROVAL
+}
+
+enum ApprovalDecision {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DeductionTrigger {
+  DISCIPLINARY_ACTION
+  LEAVE_GE_1_MONTH
+  FIGHT_DURING_COACHING
+  TRAINING_GT_1_MONTH
+  STUDY_ASSIGNMENT_ABSENCE
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+}
+
+enum MinimumRequirementLevel {
+  DOKTER_SUBSPESIALIS
+  DOKTER_SPESIALIS
+  DOKTER_UMUM
+  PERAWAT_MAHIR
+}
+
+// ---------------------------------------------------------------------------
+// Auth / RBAC
+// ---------------------------------------------------------------------------
+
+model User {
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  username           String    @unique
+  passwordHash       String
+  role               UserRole
+  employeeId         String?   @unique
+  employee           Employee? @relation(fields: [employeeId], references: [id])
+  isActive           Boolean   @default(true)
+  twoFactorEnabled   Boolean   @default(false)
+  twoFactorSecret    String?
+  lastLoginAt        DateTime?
+  passwordChangedAt  DateTime  @default(now())
+  failedLoginAttempts Int      @default(0)
+  lockedUntil        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  refreshTokens   RefreshToken[]
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+  approvalSteps   ApprovalStep[]
+  importBatches   ImportBatch[]
+  openedPeriods   CalculationPeriod[] @relation("PeriodOpenedBy")
+  simulationRuns  SimulationRun[]
+
+  @@index([role])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  userAgent String?
+  ipAddress String?
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Master data
+// ---------------------------------------------------------------------------
+
+model WorkUnit {
+  id              String   @id @default(uuid())
+  code            String   @unique
+  name            String
+  serviceCategory String // rawat_inap, rawat_jalan, igd, ibs, radiologi, laboratorium, rehab_medik, dst.
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  employees          Employee[]
+  proportionSchemes  ProportionScheme[]
+  serviceTransactions ServiceTransaction[]
+  tariffServices     TariffService[]
+  approvalSteps      ApprovalStep[]
+
+  @@map("work_units")
+}
+
+model JobGrade {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  weightScore Decimal  @db.Decimal(10, 4)
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  employees Employee[]
+
+  @@map("job_grades")
+}
+
+model Employee {
+  id                String            @id @default(uuid())
+  nip               String            @unique
+  fullName          String
+  staffCategory     StaffCategory
+  profession        String? // e.g. "Dokter Spesialis Bedah", "Perawat Mahir"
+  workUnitId        String
+  workUnit          WorkUnit          @relation(fields: [workUnitId], references: [id])
+  jobGradeId        String?
+  jobGrade          JobGrade?         @relation(fields: [jobGradeId], references: [id])
+  position          String? // jabatan struktural, for indexing
+  employmentStatus  EmploymentStatus
+  isActive          Boolean           @default(true)
+  startDate         DateTime
+  minimumRequirementLevel MinimumRequirementLevel?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  user                 User?
+  serviceTransactions  ServiceTransaction[]
+  attendanceRecords    AttendanceRecord[]
+  performanceScores    PerformanceScore[]
+  calculationResults   CalculationResult[]
+  indexingScores       IndexingScore[]
+
+  @@index([workUnitId])
+  @@index([staffCategory])
+  @@map("employees")
+}
+
+// Versioned/time-bound proportion scheme: % of tariff/claim value paid as
+// Jaspel per work unit + payer status (JKN/Non-JKN) + role in the service.
+model ProportionScheme {
+  id              String                  @id @default(uuid())
+  workUnitId      String
+  workUnit        WorkUnit                @relation(fields: [workUnitId], references: [id])
+  guaranteeStatus ServiceGuaranteeStatus
+  serviceRole     ServiceRole
+  percentage      Decimal                 @db.Decimal(6, 3) // e.g. 12.500 = 12.5%
+  effectiveFrom   DateTime
+  effectiveTo     DateTime?
+  notes           String?
+  createdById     String?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@index([workUnitId, guaranteeStatus, serviceRole, effectiveFrom])
+  @@map("proportion_schemes")
+}
+
+// Versioned weight per indexing variable used for administrative/structural
+// staff scoring (experience, skill, risk, urgency, position, performance).
+model IndexingWeight {
+  id             String   @id @default(uuid())
+  variableCode   String // EXPERIENCE, SKILL, RISK, URGENCY, POSITION, PERFORMANCE
+  variableLabel  String
+  weightPercent  Decimal  @db.Decimal(6, 3)
+  effectiveFrom  DateTime
+  effectiveTo    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([variableCode, effectiveFrom])
+  @@map("indexing_weights")
+}
+
+// Raw per-employee, per-period score for each indexing variable, entered by
+// direct supervisors (or imported). Feeds the administrative staff engine.
+model IndexingScore {
+  id            String   @id @default(uuid())
+  employeeId    String
+  employee      Employee @relation(fields: [employeeId], references: [id])
+  periodId      String
+  period        CalculationPeriod @relation(fields: [periodId], references: [id])
+  variableCode  String
+  score         Decimal  @db.Decimal(10, 4) // raw score 0-100
+  notes         String?
+  scoredById    String?
+  importBatchId String?
+  importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id])
+  createdAt     DateTime @default(now())
+
+  @@unique([employeeId, periodId, variableCode])
+  @@map("indexing_scores")
+}
+
+model MinimumRequirement {
+  id            String                  @id @default(uuid())
+  level         MinimumRequirementLevel
+  minimumAmount Decimal                 @db.Decimal(16, 2)
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  createdAt     DateTime                @default(now())
+
+  @@index([level, effectiveFrom])
+  @@map("minimum_requirements")
+}
+
+model DeductionRule {
+  id            String            @id @default(uuid())
+  trigger       DeductionTrigger
+  description   String
+  percentage    Decimal           @db.Decimal(6, 3) // % reduction applied to net amount
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([trigger, effectiveFrom])
+  @@map("deduction_rules")
+}
+
+model TariffService {
+  id              String                 @id @default(uuid())
+  code            String                 @unique
+  name            String
+  workUnitId      String?
+  workUnit        WorkUnit?              @relation(fields: [workUnitId], references: [id])
+  guaranteeStatus ServiceGuaranteeStatus
+  tariffAmount    Decimal                @db.Decimal(16, 2)
+  effectiveFrom   DateTime
+  effectiveTo     DateTime?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  @@index([code])
+  @@map("tariff_services")
+}
+
+// ---------------------------------------------------------------------------
+// Import pipeline
+// ---------------------------------------------------------------------------
+
+model ImportBatch {
+  id            String            @id @default(uuid())
+  type          ImportBatchType
+  periodId      String
+  period        CalculationPeriod @relation(fields: [periodId], references: [id])
+  fileName      String
+  fileStoragePath String
+  uploadedById  String
+  uploadedBy    User              @relation(fields: [uploadedById], references: [id])
+  status        ImportBatchStatus @default(UPLOADED)
+  totalRows     Int               @default(0)
+  validRows     Int               @default(0)
+  invalidRows   Int               @default(0)
+  committedAt   DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  rows                ImportRow[]
+  serviceTransactions ServiceTransaction[]
+  attendanceRecords   AttendanceRecord[]
+  performanceScores   PerformanceScore[]
+  indexingScores      IndexingScore[]
+
+  @@index([periodId, type])
+  @@map("import_batches")
+}
+
+model ImportRow {
+  id          String          @id @default(uuid())
+  batchId     String
+  batch       ImportBatch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  rowNumber   Int
+  rawData     Json
+  status      ImportRowStatus @default(PENDING)
+  errors      Json?
+  createdAt   DateTime        @default(now())
+
+  @@index([batchId, status])
+  @@map("import_rows")
+}
+
+model ServiceTransaction {
+  id              String                 @id @default(uuid())
+  periodId        String
+  period          CalculationPeriod      @relation(fields: [periodId], references: [id])
+  workUnitId      String
+  workUnit        WorkUnit               @relation(fields: [workUnitId], references: [id])
+  serviceDate     DateTime
+  patientRmCode   String
+  serviceName     String
+  guaranteeStatus ServiceGuaranteeStatus
+  tariffAmount    Decimal                @db.Decimal(16, 2)
+  employeeId      String
+  employee        Employee               @relation(fields: [employeeId], references: [id])
+  serviceRole     ServiceRole
+  importBatchId   String?
+  importBatch     ImportBatch?           @relation(fields: [importBatchId], references: [id])
+  createdAt       DateTime               @default(now())
+
+  @@index([periodId, workUnitId])
+  @@index([periodId, employeeId])
+  @@map("service_transactions")
+}
+
+model AttendanceRecord {
+  id                          String   @id @default(uuid())
+  employeeId                  String
+  employee                    Employee @relation(fields: [employeeId], references: [id])
+  periodId                    String
+  period                      CalculationPeriod @relation(fields: [periodId], references: [id])
+  leaveDays                   Int      @default(0)
+  leaveType                   String?
+  disciplinaryAction          Boolean  @default(false)
+  disciplinaryNotes           String?
+  fightDuringCoaching         Boolean  @default(false)
+  trainingDays                Int      @default(0)
+  studyAssignmentAbsenceDaysPerWeek Int @default(0)
+  attendancePercent           Decimal  @db.Decimal(6, 3) @default(100)
+  importBatchId                String?
+  importBatch                  ImportBatch? @relation(fields: [importBatchId], references: [id])
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  @@unique([employeeId, periodId])
+  @@map("attendance_records")
+}
+
+model PerformanceScore {
+  id             String   @id @default(uuid())
+  employeeId     String
+  employee       Employee @relation(fields: [employeeId], references: [id])
+  periodId       String
+  period         CalculationPeriod @relation(fields: [periodId], references: [id])
+  qualityScore   Decimal  @db.Decimal(6, 3) // 0-100, kualitas pelaksanaan kegiatan (60%)
+  notes          String?
+  importBatchId   String?
+  importBatch     ImportBatch? @relation(fields: [importBatchId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([employeeId, periodId])
+  @@map("performance_scores")
+}
+
+// ---------------------------------------------------------------------------
+// Calculation & workflow
+// ---------------------------------------------------------------------------
+
+model CalculationPeriod {
+  id                     String       @id @default(uuid())
+  name                   String // e.g. "Agustus 2026"
+  year                   Int
+  month                  Int
+  status                 PeriodStatus @default(DRAFT)
+  performanceBudgetCap   Decimal?     @db.Decimal(18, 2) // pagu insentif kinerja, optional
+  administrativeBudget   Decimal      @default(0) @db.Decimal(18, 2) // alokasi insentif kinerja tenaga administrasi/struktural
+  unitTeamFixedPortionPercent Decimal @default(100) @db.Decimal(6, 3) // % pool tim unit yang tetap di unit; sisanya subsidi lintas-unit
+  openedById             String
+  openedBy               User         @relation("PeriodOpenedBy", fields: [openedById], references: [id])
+  calculatedAt           DateTime?
+  lockedAt               DateTime?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  importBatches       ImportBatch[]
+  serviceTransactions ServiceTransaction[]
+  attendanceRecords   AttendanceRecord[]
+  performanceScores   PerformanceScore[]
+  indexingScores      IndexingScore[]
+  calculationResults  CalculationResult[]
+  approvalSteps       ApprovalStep[]
+  simulationRuns      SimulationRun[]
+
+  @@unique([year, month])
+  @@map("calculation_periods")
+}
+
+// Snapshot of one employee's Jaspel result for a period. Immutable once the
+// period is locked; corrections create a new period-level revision instead
+// of mutating this row (see PRD §4 step 11: "arsip periode... immutable").
+model CalculationResult {
+  id                        String        @id @default(uuid())
+  periodId                  String
+  period                    CalculationPeriod @relation(fields: [periodId], references: [id])
+  employeeId                String
+  employee                  Employee      @relation(fields: [employeeId], references: [id])
+  staffCategory             StaffCategory
+  grossAmount                Decimal      @db.Decimal(18, 2)
+  deductionAmount             Decimal    @db.Decimal(18, 2) @default(0)
+  paguAdjustmentFactor       Decimal      @db.Decimal(10, 6) @default(1)
+  minimumRequirementApplied Boolean       @default(false)
+  netAmount                  Decimal      @db.Decimal(18, 2)
+  components                Json // itemized breakdown: transactions, formula, percentages used
+  formulaVersion             String
+  calculatedAt               DateTime      @default(now())
+
+  @@unique([periodId, employeeId])
+  @@index([periodId, staffCategory])
+  @@map("calculation_results")
+}
+
+model ApprovalStep {
+  id         String           @id @default(uuid())
+  periodId   String
+  period     CalculationPeriod @relation(fields: [periodId], references: [id])
+  workUnitId String? // set only for UNIT_VERIFICATION stage
+  workUnit   WorkUnit?        @relation(fields: [workUnitId], references: [id])
+  stage      ApprovalStage
+  decision   ApprovalDecision @default(PENDING)
+  actorId    String?
+  actor      User?            @relation(fields: [actorId], references: [id])
+  notes      String?
+  decidedAt  DateTime?
+  createdAt  DateTime         @default(now())
+
+  @@index([periodId, stage])
+  @@map("approval_steps")
+}
+
+model SimulationRun {
+  id           String   @id @default(uuid())
+  periodId     String
+  period       CalculationPeriod @relation(fields: [periodId], references: [id])
+  name         String
+  parameters   Json // overridden proportion/indexing/deduction parameters
+  result       Json // aggregated simulated output, never written to CalculationResult
+  createdById  String
+  createdBy    User     @relation(fields: [createdById], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@map("simulation_runs")
+}
+
+// ---------------------------------------------------------------------------
+// Audit / notifications
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  action     String // e.g. "CREATE", "UPDATE", "DELETE", "APPROVE", "REJECT", "LOGIN"
+  entityType String // e.g. "Employee", "ProportionScheme", "CalculationPeriod"
+  entityId   String?
+  before     Json?
+  after      Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id        String              @id @default(uuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  channel   NotificationChannel @default(IN_APP)
+  isRead    Boolean             @default(false)
+  createdAt DateTime            @default(now())
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
