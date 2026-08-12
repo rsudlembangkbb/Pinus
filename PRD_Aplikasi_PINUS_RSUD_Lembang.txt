@@ -1,0 +1,777 @@
+===== PAGE 1 =====
+DOKUMEN PRODUCT REQUIREMENTS DOCUMENT (PRD)
+APLIKASI PINUS
+Sistem Pembagian Insentif daN Jasa Pelayanan Untuk Semua
+RSUD Lembang — Kabupaten Bandung Barat
+Disusun oleh:
+dr. R. Nurul Rasihan Risalah, MMRS.
+RSUD Lembang
+Versi 0.1 (Draf) — Agustus 2026
+
+===== PAGE 2 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 2 dari 19
+Daftar Isi
+
+===== PAGE 3 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 3 dari 19
+1. Pendahuluan
+1.1 Latar Belakang
+RSUD Lembang menerapkan skema remunerasi Badan Layanan Umum Daerah (BLUD) yang salah satu
+komponennya adalah insentif kinerja/jasa pelayanan (Jaspel) bagi tenaga medis, tenaga kesehatan, dan
+tenaga administrasi. Berdasarkan regulasi yang menjadi acuan — Rancangan Peraturan Bupati Bandung
+Barat tentang Remunerasi BLUD pada UOBK RSUD Lembang serta Keputusan Direktur Jenderal Pelayanan
+Kesehatan Kemenkes Nomor HK.02.02/D/286/2025 tentang Petunjuk Teknis Remunerasi BLU Rumah
+Sakit — perhitungan Jaspel untuk tenaga medis dan tenaga kesehatan menggunakan Metode
+Proporsionalitas, yaitu perkalian persentase tertentu dari pendapatan/tarif layanan (JKN maupun Non-
+JKN) terhadap volume dan jenis layanan yang diberikan.
+Saat ini proses perhitungan pembagian Jaspel di RSUD Lembang dilakukan secara manual berbasis rekap
+data dari SIMRS (jumlah pasien, tindakan, jenis layanan, kelas layanan, DPJP, dsb.) yang diolah kembali
+menggunakan spreadsheet setiap akhir bulan. Proses ini rawan terhadap kesalahan input, sulit ditelusuri
+(tidak auditable), memakan waktu lama, dan minim transparansi bagi pegawai penerima Jaspel karena
+mereka tidak memiliki akses langsung untuk melihat rincian perhitungan hak mereka.
+Aplikasi PINUS dikembangkan untuk mendigitalisasi dan mengotomasi seluruh siklus bulanan pembagian
+Jaspel — mulai dari impor data sumber dari SIMRS, konfigurasi parameter proporsi dan skema
+remunerasi sesuai regulasi yang berlaku, proses kalkulasi otomatis, verifikasi berjenjang, hingga publikasi
+rincian penerimaan yang transparan untuk setiap pegawai.
+1.2 Filosofi Nama PINUS
+PINUS merupakan akronim dari "Sistem Pembagian Insentif daN Jasa Pelayanan Untuk Semua". Nama ini
+terinspirasi dari pohon pinus yang identik dengan lanskap alam Lembang. Pohon pinus yang tumbuh
+kokoh, lurus ke atas, dan berdaun rimbun melambangkan sebuah sistem Jaspel yang berintegritas tinggi
+dan transparan, dibangun di atas fondasi kuat untuk memberikan keadilan yang merata sekaligus
+mengayomi seluruh staf RSUD Lembang tanpa terkecuali. Nuansa warna hijau dan biru pada identitas
+visual aplikasi diselaraskan dengan logo RSUD Lembang, memberi kesan damai, sejuk, dan profesional.
+P Pembagian — komitmen mendistribusikan jasa pelayanan secara sistematis, proporsional, dan tepat
+waktu sesuai regulasi.
+I Insentif — bentuk penghargaan objektif atas kinerja, dedikasi, dan kontribusi nyata setiap tenaga
+kesehatan dan staf pendukung.
+N daN Jasa Pelayanan — cakupan sistem yang komprehensif dalam mengelola seluruh aspek
+pendapatan jasa layanan secara terintegrasi.
+U Untuk — sistem dikelola murni demi kesejahteraan bersama.
+S Semua — kesetaraan dan inklusivitas bagi jajaran struktural, medis, hingga staf pendukung.
+1.3 Tujuan Dokumen
+Dokumen ini menjabarkan kebutuhan produk (Product Requirements) untuk aplikasi PINUS sebagai dasar
+bagi tim pengembang (fullstack engineer, arsitek sistem, dan DevOps) dalam merancang, membangun,
+dan menerapkan sistem secara end-to-end, mencakup ruang lingkup fungsional, non-fungsional, alur
+
+===== PAGE 4 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 4 dari 19
+proses bisnis, model data, kebutuhan integrasi/impor-ekspor, serta arsitektur teknis yang
+direkomendasikan.
+2. Deskripsi Produk
+2.1 Ringkasan Aplikasi
+PINUS adalah aplikasi web internal RSUD Lembang untuk mengelola siklus bulanan perhitungan dan
+pembagian jasa pelayanan (Jaspel) serta insentif kinerja secara proporsional, digital, auditable, dan
+transparan. Aplikasi menerima data mentah hasil ekspor dari SIMRS (kunjungan, tindakan, klaim
+JKN/Non-JKN, dsb.), memetakannya ke skema proporsi dan bobot yang telah dikonfigurasi sesuai regulasi
+(Perbup Remunerasi BLUD dan Keputusan Direktur), menjalankan mesin kalkulasi, melalui alur verifikasi
+berjenjang, hingga menerbitkan rincian penerimaan per pegawai yang dapat diakses masing-masing
+pegawai secara mandiri (self-service transparency).
+2.2 Tujuan Aplikasi
+1. Mengotomasi proses perhitungan Jaspel/insentif bulanan berbasis Metode Proporsionalitas sesuai
+regulasi yang berlaku, menggantikan proses manual berbasis spreadsheet.
+2. Menyediakan mekanisme impor data terstandardisasi dari SIMRS (jumlah pasien, tindakan, jenis
+layanan, status JKN/Non-JKN, unit kerja, DPJP/pelaksana) sebagai dasar perhitungan.
+3. Menjamin keakuratan dan konsistensi perhitungan melalui aturan/parameter yang terkonfigurasi
+(bukan hard-code), mengikuti ketentuan proporsi per unit, kategori tenaga, dan job grade.
+4. Menyediakan alur verifikasi dan persetujuan berjenjang (maker–checker–approver) sebelum hasil
+perhitungan difinalisasi dan dipublikasikan.
+5. Memberikan transparansi penuh kepada setiap pegawai atas rincian perhitungan hak Jaspel
+miliknya (sumber data, formula, dan komponen potongan).
+6. Menyediakan jejak audit (audit trail) menyeluruh atas setiap perubahan data, parameter, dan
+proses persetujuan untuk kebutuhan akuntabilitas dan pemeriksaan (audit internal/eksternal,
+Inspektorat, BPK).
+7. Menghasilkan laporan dan dokumen keluaran (slip Jaspel per pegawai, rekap per unit, rekap untuk
+keperluan penatausahaan keuangan BLUD) dalam format yang dapat diekspor/dicetak.
+2.3 Ruang Lingkup
+2.3.1 Termasuk dalam Lingkup (In-Scope)
+• Manajemen data induk: pegawai, unit kerja/instalasi, jabatan, kategori tenaga
+(medis/keperawatan/nakes non-keperawatan/administrasi), job grade, dan skema proporsi.
+• Impor data transaksi bulanan dari SIMRS melalui unggah berkas (Excel/CSV) dengan template
+terstandardisasi, serta validasi otomatis.
+• Mesin kalkulasi Jaspel proporsional (tenaga medis, tenaga kesehatan/tim kerja unit, dan indeksing
+tenaga administrasi/struktural).
+• Pengelolaan komponen pengurang (potongan disiplin, cuti, diklat, dsb.) sesuai ketentuan Pasal 15
+Raperbup Remunerasi.
+
+===== PAGE 5 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 5 dari 19
+• Alur kerja verifikasi dan persetujuan berjenjang (draft → verifikasi unit/Tim Remunerasi → verifikasi
+Bagian Keuangan → persetujuan Direktur).
+• Dashboard transparansi Jaspel per pegawai (self-service) dan dashboard rekap manajemen (per unit,
+per periode, tren).
+• Ekspor laporan (PDF slip Jaspel, Excel rekap per unit/periode) dan cetak dokumen pendukung
+penatausahaan.
+• Manajemen pengguna, peran, dan hak akses (RBAC), serta audit trail seluruh aktivitas penting.
+• Notifikasi (in-app/email) status proses bulanan kepada pihak terkait.
+2.3.2 Tidak Termasuk dalam Lingkup (Out-of-Scope) — Fase Awal
+• Integrasi langsung (real-time API) ke SIMRS — pada fase awal, transfer data dilakukan melalui
+mekanisme impor berkas, bukan koneksi database langsung. Integrasi API dapat menjadi
+peningkatan pada fase berikutnya.
+• Proses payroll/pembayaran gaji pokok dan komponen remunerasi lain di luar Jaspel/insentif kinerja
+proporsional (gaji, tunjangan tetap, pensiun) — PINUS berfokus pada perhitungan Jaspel; hasil
+akhirnya diekspor sebagai dasar bagi sistem/proses pembayaran keuangan BLUD, bukan
+menggantikan sistem penggajian.
+• Modul evaluasi jabatan (job evaluation) dan penyusunan klasterisasi rumah sakit — parameter hasil
+evaluasi tersebut menjadi input/konfigurasi bagi PINUS, bukan diproses di dalamnya.
+Catatan: Poin-poin ini adalah rekomendasi cakupan awal berdasarkan kebutuhan yang disampaikan. Perlu
+dikonfirmasi oleh manajemen RSUD Lembang, terutama terkait apakah dibutuhkan integrasi API langsung ke
+SIMRS pada rilis pertama.
+2.4 Landasan Regulasi
+• Rancangan Peraturan Bupati Bandung Barat tentang Remunerasi Badan Layanan Umum Daerah
+pada UOBK RSUD Lembang.
+• Keputusan Direktur Jenderal Pelayanan Kesehatan Kementerian Kesehatan Nomor
+HK.02.02/D/286/2025 tentang Petunjuk Teknis Pemberian Remunerasi bagi Pejabat Pengelola,
+Pegawai, dan Dewan Pengawas BLU Rumah Sakit.
+• Dokumen internal RSUD Lembang: kebijakan penganggaran dan penatausahaan remunerasi, serta
+paparan strategi transformasi remunerasi BLUD RSUD Lembang.
+Catatan: Nilai persentase proporsi, bobot indeksing, dan nominal minimum requirement yang final dan berlaku
+khusus untuk RSUD Lembang ditetapkan melalui Keputusan Bupati/Keputusan Direktur tersendiri (belum
+tercantum sebagai angka final pada draf Perbup yang tersedia). Aplikasi harus memperlakukan seluruh nilai ini
+sebagai parameter yang dapat dikonfigurasi, bukan nilai tetap (hard-coded).
+3. Pengguna dan Peran (Roles)
+Aplikasi menerapkan Role-Based Access Control (RBAC) dengan pemisahan wewenang yang jelas antara
+pihak yang menginput data, memverifikasi, menyetujui, dan menerima hasil, sesuai prinsip pengendalian
+internal (segregation of duties).
+Peran Deskripsi & Kewenangan Utama
+Super Admin / IT Administrator Mengelola konfigurasi sistem, master data, parameter proporsi, user & hak
+
+===== PAGE 6 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 6 dari 19
+Peran Deskripsi & Kewenangan Utama
+akses, integrasi impor/ekspor, monitoring sistem.
+Admin Jaspel / Tim Remunerasi Mengunggah data impor SIMRS bulanan, menjalankan proses kalkulasi,
+meninjau hasil per unit, mengajukan hasil untuk verifikasi.
+Verifikator Unit / Kepala Instalasi Meninjau dan memvalidasi data serta hasil perhitungan Jaspel untuk unit
+kerjanya sebelum diteruskan ke tahap berikutnya.
+Bagian Keuangan / Pejabat
+Keuangan BLUD
+Memverifikasi kesesuaian hasil perhitungan dengan alokasi anggaran/pagu
+Jaspel BLUD, menyiapkan dasar penatausahaan pembayaran.
+Direktur / Pejabat Pengelola BLUD Memberikan persetujuan akhir (final approval) atas hasil perhitungan
+Jaspel sebelum dipublikasikan dan dieksekusi pembayarannya.
+Pegawai (Tenaga Medis, Nakes,
+Administrasi)
+Mengakses dashboard transparansi pribadi: rincian volume layanan,
+formula, komponen, dan nominal Jaspel miliknya per periode.
+Auditor / Inspektorat (opsional,
+read-only)
+Akses baca atas riwayat perhitungan, parameter yang digunakan, dan jejak
+audit untuk kebutuhan pemeriksaan.
+Catatan: Struktur peran di atas dapat disesuaikan dengan struktur organisasi aktual RSUD Lembang (mis.
+apakah Tim Remunerasi adalah tim lintas unit yang dibentuk dengan Keputusan Bupati sebagaimana disebut
+dalam Perbup, atau unit internal RSUD).
+4. Alur Proses Bisnis Bulanan
+Aplikasi PINUS dirancang mengikuti siklus rutin akhir bulan sebagai berikut:
+8. Persiapan Periode — Admin Jaspel membuka periode perhitungan baru (mis. "Agustus 2026") di
+sistem.
+9. Impor Data SIMRS — Admin Jaspel mengunggah berkas ekspor SIMRS (jumlah pasien, tindakan,
+jenis layanan, status JKN/Non-JKN, unit pelaksana, DPJP/petugas pelaksana) sesuai template yang
+disediakan sistem.
+10. Validasi Data — Sistem memvalidasi struktur, kelengkapan, dan konsistensi data (mis. kecocokan
+kode pegawai/unit dengan master data, deteksi duplikasi, nilai di luar rentang wajar) dan
+menampilkan laporan error/warning untuk diperbaiki.
+11. Pelengkapan Data Pendukung — Admin melengkapi data non-SIMRS yang diperlukan (mis. rekap
+kehadiran/cuti, hasil penilaian kinerja/KPI bulanan, catatan pembinaan/disiplin) baik via impor
+maupun input manual/terintegrasi dari modul kepegawaian bila tersedia.
+12. Kalkulasi Otomatis — Sistem menjalankan mesin perhitungan Jaspel proporsional per kategori
+tenaga (medis, kesehatan/tim unit, administrasi) menggunakan parameter proporsi dan bobot yang
+berlaku pada periode tersebut, termasuk penerapan pengurangan/potongan dan minimum
+requirement.
+13. Simulasi & Pratinjau — Hasil kalkulasi ditampilkan sebagai draf/simulasi (belum final) yang dapat
+ditinjau oleh Admin dan Verifikator Unit, lengkap dengan rincian komponen per pegawai dan
+agregat per unit.
+
+===== PAGE 7 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 7 dari 19
+14. Verifikasi Berjenjang — Verifikator Unit meninjau dan menandatangani (approve) hasil untuk
+unitnya; Bagian Keuangan memverifikasi kesesuaian dengan pagu/alokasi anggaran Jaspel; Direktur
+memberikan persetujuan akhir.
+15. Penyesuaian Proporsional (bila melebihi pagu) — Bila total hasil perhitungan melampaui alokasi
+insentif kinerja yang tersedia pada periode tersebut, sistem melakukan penyesuaian proporsional
+otomatis sesuai ketentuan regulasi, dengan jejak perhitungan yang transparan.
+16. Finalisasi & Publikasi — Setelah disetujui, hasil dikunci (locked) dan dipublikasikan; setiap pegawai
+dapat mengakses rincian Jaspel miliknya melalui dashboard transparansi.
+17. Ekspor & Penatausahaan — Sistem menghasilkan dokumen ekspor (rekap per unit, slip per pegawai,
+ringkasan untuk keperluan pembayaran/penatausahaan keuangan BLUD) yang diteruskan ke proses
+pembayaran.
+18. Arsip Periode — Data dan hasil setiap periode diarsipkan dan tidak dapat diubah (immutable)
+setelah dikunci, kecuali melalui mekanisme koreksi khusus dengan jejak audit dan otorisasi ulang.
+5. Kebutuhan Fungsional (Functional Requirements)
+5.1 Modul Master Data
+No Fitur Deskripsi
+1 Master Pegawai
+CRUD data pegawai: NIP/NIK, nama, kategori tenaga
+(medis/nakes/administrasi/struktural), profesi/spesialisasi, unit kerja,
+jabatan, job grade, status kepegawaian (PNS/PPPK/Non-ASN), status aktif,
+tanggal mulai kerja (untuk perhitungan masa kerja).
+2 Master Unit Kerja/Instalasi
+CRUD unit kerja/instalasi beserta kategori layanan (rawat inap, rawat
+jalan, IGD, IBS, radiologi, laboratorium, rehab medik, dsb.) yang menjadi
+acuan skema proporsi.
+3 Master Skema Proporsi
+Konfigurasi persentase proporsi Jaspel per unit kerja, per kategori
+JKN/Non-JKN, dan per peran dalam tindakan (operator, co-operator,
+anestesi, DPJP, dsb.), dengan riwayat versi (efektif dari tanggal tertentu)
+agar perubahan kebijakan tidak menimpa data historis.
+4 Master Tarif & Jenis Layanan Referensi tarif layanan (reguler/INA-CBGs) dan jenis tindakan yang
+menjadi dasar perhitungan nilai layanan.
+5 Master Job Grade & Bobot
+Indeksing
+Konfigurasi job grade tenaga kesehatan dan bobot indeksing tenaga
+administrasi/struktural (pengalaman & masa kerja, keterampilan, risiko
+kerja, kegawatdaruratan, jabatan, capaian kinerja) beserta skor per
+variabel.
+6 Master Aturan Pengurangan
+Konfigurasi aturan potongan (pembinaan/hukuman disiplin, cuti ≥1 bulan,
+diklat >1 bulan, tugas belajar, dsb.) beserta persentase potongan yang
+dapat disesuaikan mengikuti perubahan regulasi.
+5.2 Modul Impor Data SIMRS
+No Fitur Deskripsi
+1 Template Impor Data SIMRS Sistem menyediakan template unduhan (Excel/CSV) berisi kolom
+
+===== PAGE 8 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 8 dari 19
+No Fitur Deskripsi
+terstandardisasi: periode, tanggal layanan, unit kerja, jenis
+layanan/tindakan, status JKN/Non-JKN, nilai tarif/klaim, kode pegawai
+pelaksana/DPJP, peran (operator/co-operator/anestesi/perawat
+pelaksana), jumlah pasien/tindakan.
+2 Unggah Berkas
+Pengguna mengunggah satu atau beberapa berkas hasil ekspor SIMRS;
+sistem mendukung format .xlsx dan .csv dengan batas ukuran berkas yang
+wajar dan penanganan unggah berkas besar (chunked upload/queue
+processing).
+3 Validasi & Pemetaan
+(Mapping)
+Sistem memvalidasi setiap baris data terhadap master data (kode
+pegawai, kode unit valid), format tanggal/angka, dan mendeteksi baris
+duplikat atau anomali (mis. nilai negatif, tanggal di luar periode). Baris
+bermasalah ditandai dan dapat diperbaiki/diunggah ulang tanpa
+mengulang seluruh proses.
+4 Riwayat Impor Setiap sesi impor tercatat (siapa, kapan, jumlah baris berhasil/gagal,
+berkas sumber) dan dapat diaudit atau diunduh kembali.
+5 Impor Data Pendukung
+Impor data non-SIMRS pendukung perhitungan: rekap kehadiran/cuti
+pegawai, hasil penilaian kinerja/KPI bulanan, catatan disiplin — melalui
+template terpisah.
+5.3 Modul Mesin Kalkulasi Jaspel Proporsional
+No Fitur Deskripsi
+1 Mesin Kalkulasi Tenaga
+Medis
+Menghitung insentif tenaga medis berdasarkan proporsi jasa layanan dari
+total klaim/tarif JKN (mis. konversi INA-CBGs) dan dari tarif layanan Non-
+JKN, dikalikan volume/jenis layanan yang tercatat, sesuai skema proporsi
+per unit yang berlaku pada periode tersebut, tanpa dibatasi target kinerja.
+2 Mesin Kalkulasi Tenaga
+Kesehatan (Tim Unit)
+Menghitung pendapatan unit kerja (perawat & nakes non-keperawatan)
+kemudian mendistribusikannya ke tiap individu berdasarkan tanggung
+jawab, beban kerja, dan job grade — mendukung pendekatan proporsi
+tetap dan proporsi subsidi antar-unit sebagaimana pola perhitungan pada
+dokumen acuan.
+3 Mesin Kalkulasi Tenaga
+Administrasi/Struktural
+Menghitung insentif kinerja berdasarkan indeksing (skor individu terhadap
+total skor) dari variabel pengalaman/masa kerja, keterampilan, risiko
+kerja, kegawatdaruratan, jabatan, dan capaian kinerja (kehadiran 40% +
+kualitas kerja 60%).
+4 Penerapan Minimum
+Requirement
+Sistem menandai dan menyesuaikan hasil perhitungan individu (dokter
+sub-spesialis, spesialis, umum, perawat mahir) agar tidak berada di bawah
+nilai pendapatan minimum yang dikonfigurasi.
+5 Penerapan
+Potongan/Pengurangan
+Sistem menerapkan pengurangan otomatis sesuai master aturan
+pengurangan (mis. cuti ≥1 bulan −50%, diklat >1 bulan −50%, pembinaan
+disiplin −50%, tugas belajar dengan ketidakhadiran tertentu −80%)
+berdasarkan data kehadiran/status pegawai pada periode berjalan.
+6 Penyesuaian Proporsional
+atas Pagu
+Jika total insentif hasil Metode Proporsionalitas melebihi alokasi/pagu
+insentif kinerja pada periode tersebut, sistem melakukan penyesuaian
+proporsional otomatis dengan rincian faktor penyesuaian yang transparan
+dan dapat ditelusuri.
+
+===== PAGE 9 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 9 dari 19
+No Fitur Deskripsi
+7 Simulasi What-If
+Admin/Verifikator dapat menjalankan simulasi perhitungan dengan
+parameter yang diubah sementara (tanpa memengaruhi data final) untuk
+keperluan analisis kebijakan sebelum parameter baru diberlakukan resmi.
+8 Log Kalkulasi
+Setiap proses kalkulasi menyimpan snapshot input, parameter yang
+digunakan, dan output — sehingga hasil suatu periode selalu dapat
+direkonstruksi meskipun parameter berubah di kemudian hari.
+5.4 Modul Alur Verifikasi & Persetujuan (Workflow)
+No Fitur Deskripsi
+1 Status & Papan Kendali
+Periode
+Dashboard status siklus bulanan (Draft → Diproses → Menunggu
+Verifikasi Unit → Menunggu Verifikasi Keuangan → Menunggu
+Persetujuan Direktur → Final/Terpublikasi) dengan indikator unit mana
+yang sudah/belum memverifikasi.
+2 Verifikasi & Catatan per Unit
+Verifikator Unit dapat meninjau rincian per pegawai di unitnya, memberi
+catatan/keberatan, menyetujui, atau mengembalikan (reject) ke Admin
+untuk perbaikan data disertai alasan.
+3 Persetujuan Berjenjang
+Alur approval berurutan (Verifikator Unit → Keuangan → Direktur)
+dengan pencatatan waktu, pengguna, dan status setiap tahap; dapat
+dikonfigurasi apabila struktur organisasi berubah.
+4 Penguncian Data (Lock)
+Setelah disetujui final, data periode tersebut terkunci dari perubahan
+langsung; perubahan lanjutan hanya melalui mekanisme
+koreksi/adendum resmi dengan otorisasi ulang dan tercatat sebagai
+riwayat revisi.
+5 Notifikasi Notifikasi in-app/email kepada pihak terkait pada setiap perpindahan
+status (mis. "Data periode Agustus 2026 menunggu verifikasi Anda").
+5.5 Modul Transparansi & Dashboard
+No Fitur Deskripsi
+1 Dashboard Pegawai (Self-
+Service)
+Setiap pegawai login dan melihat rincian Jaspel miliknya per periode: total
+nominal, rincian per komponen (jumlah tindakan/layanan, tarif,
+persentase proporsi, hasil), komponen potongan (jika ada), serta
+perbandingan tren beberapa periode terakhir.
+2 Slip Jaspel
+Slip rincian individual yang dapat diunduh dalam format PDF,
+mencantumkan identitas, periode, rincian perhitungan, dan status
+persetujuan (final).
+3 Dashboard Manajemen
+Dashboard agregat untuk manajemen/Direktur: total realisasi Jaspel per
+periode, distribusi per unit/kategori tenaga, perbandingan terhadap
+pagu/anggaran, tren bulanan/tahunan.
+4 Riwayat & Perbandingan Pegawai dan manajemen dapat melihat riwayat periode-periode
+sebelumnya untuk transparansi dan analisis tren.
+
+===== PAGE 10 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 10 dari 19
+5.6 Modul Ekspor & Pelaporan
+No Fitur Deskripsi
+1 Ekspor Rekap per Unit Ekspor Excel berisi rekap perhitungan per unit kerja per periode (untuk
+keperluan verifikasi dan arsip Bagian Keuangan).
+2 Ekspor Rekap
+Keseluruhan/Penatausahaan
+Ekspor ringkasan total per periode yang menjadi dasar dokumen
+penatausahaan pembayaran Jaspel BLUD (format dapat disesuaikan
+kebutuhan sistem keuangan/akuntansi BLUD RSUD Lembang).
+3 Cetak/Unduh Slip Massal Admin dapat mengekspor seluruh slip Jaspel pegawai dalam satu periode
+sekaligus (batch PDF/ZIP).
+4 Ekspor Data Mentah Ekspor data transaksi hasil impor dan hasil kalkulasi mentah (Excel/CSV)
+untuk keperluan analisis lanjutan atau audit eksternal.
+5.7 Modul Pengguna, Keamanan & Audit Trail
+No Fitur Deskripsi
+1 Manajemen Pengguna &
+Peran
+CRUD akun pengguna, penetapan peran (RBAC), serta pembatasan akses
+berbasis unit kerja (mis. Verifikator Unit hanya melihat data unitnya).
+2 Autentikasi & Keamanan
+Akun
+Login aman (email/username + password ter-hash), dukungan kebijakan
+password, session timeout, dan opsional autentikasi dua faktor (2FA)
+untuk peran dengan kewenangan tinggi (Direktur, Admin, Keuangan).
+3 Audit Trail
+Pencatatan menyeluruh: siapa mengubah apa, kapan, nilai
+sebelum/sesudah — mencakup perubahan master data, parameter, hasil
+impor, proses kalkulasi, dan setiap keputusan approval/reject.
+4 Log Aktivitas Sistem Log teknis (login, akses data sensitif, unduhan laporan) untuk kebutuhan
+keamanan dan investigasi bila diperlukan.
+6. Kebutuhan Non-Fungsional (Non-Functional Requirements)
+Aspek Kebutuhan
+Keamanan
+Enkripsi data at-rest dan in-transit (TLS 1.2+), hashing password (bcrypt/argon2),
+RBAC granular, proteksi terhadap OWASP Top 10, session management aman, audit
+trail immutable.
+Kerahasiaan Data
+Data kepegawaian dan finansial individu bersifat rahasia; pegawai hanya dapat
+mengakses datanya sendiri, sementara data agregat/unit lain hanya untuk peran
+yang berwenang.
+Akurasi Perhitungan
+Perhitungan finansial menggunakan tipe data desimal presisi tetap (bukan floating
+point) untuk menghindari kesalahan pembulatan; seluruh formula tervalidasi
+terhadap kasus uji berbasis contoh perhitungan pada dokumen regulasi.
+Auditability Setiap hasil akhir dapat ditelusuri kembali ke data sumber (SIMRS) dan parameter
+yang digunakan; data periode yang sudah final bersifat immutable.
+Kinerja (Performance) Proses impor dan kalkulasi untuk seluruh pegawai RSUD dalam satu periode selesai
+dalam hitungan menit, bukan jam; pemrosesan berat dijalankan secara asinkron
+
+===== PAGE 11 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 11 dari 19
+Aspek Kebutuhan
+(background job) dengan indikator progres.
+Skalabilitas Arsitektur modular yang dapat menampung pertumbuhan jumlah pegawai, unit, dan
+volume transaksi tanpa perombakan besar.
+Ketersediaan
+(Availability)
+Target ketersediaan tinggi terutama pada periode sibuk akhir/awal bulan; strategi
+backup dan rencana pemulihan bencana (disaster recovery) untuk data keuangan.
+Usabilitas
+Antarmuka sederhana dan intuitif, khususnya untuk dashboard pegawai (banyak
+pengguna dengan literasi digital beragam); responsif untuk akses melalui desktop
+maupun perangkat mobile.
+Kepatuhan
+(Compliance)
+Selaras dengan regulasi remunerasi BLUD yang berlaku serta prinsip perlindungan
+data pribadi pegawai.
+Pemeliharaan
+(Maintainability)
+Kode modular, terdokumentasi, mengikuti clean architecture agar perubahan
+parameter/regulasi di masa depan tidak memerlukan perubahan besar pada logika
+inti.
+7. Model Data (Ringkasan Entitas)
+Berikut adalah entitas-entitas utama yang direkomendasikan sebagai kerangka awal skema basis data
+(PostgreSQL). Detail kolom, relasi, dan indeks akan dirumuskan pada tahap desain teknis (technical
+design/ERD) terpisah.
+Entitas Deskripsi Singkat
+employees Data induk pegawai (identitas, kategori tenaga, unit, jabatan, job grade, status).
+work_units Unit kerja/instalasi beserta kategori layanan.
+proportion_schemes Skema proporsi Jaspel per unit/kategori JKN-NonJKN/peran, dengan versi &
+tanggal efektif.
+job_grades /
+indexing_weights Job grade dan bobot indeksing tenaga administrasi/struktural.
+deduction_rules Aturan potongan (disiplin, cuti, diklat, tugas belajar) dan persentasenya.
+import_batches Metadata setiap sesi impor data SIMRS (periode, pengunggah, waktu, status).
+service_transactions Baris data transaksi layanan hasil impor (tindakan, tarif, unit, pelaksana, status
+JKN/Non-JKN).
+attendance_records Data kehadiran/cuti/diklat pegawai per periode (dasar perhitungan potongan).
+performance_scores Skor kinerja/KPI bulanan per pegawai (dasar indeksing/capaian kinerja).
+calculation_periods Periode perhitungan (bulan/tahun) beserta status siklus (draft/verifikasi/final).
+calculation_results Hasil kalkulasi per pegawai per periode: komponen, formula terpakai, nominal
+akhir.
+approval_steps Riwayat tahapan verifikasi/persetujuan per periode/unit (siapa, kapan, status,
+catatan).
+audit_logs Jejak audit seluruh perubahan data dan aksi penting pada sistem.
+
+===== PAGE 12 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 12 dari 19
+Entitas Deskripsi Singkat
+users / roles / permissions Data akun pengguna, peran, dan hak akses granular.
+Catatan: Skema proporsi (proportion_schemes) dan aturan potongan (deduction_rules) wajib bertipe
+versioned/time-bound (memiliki tanggal mulai berlaku) agar perubahan kebijakan regulasi di kemudian hari
+tidak mengubah hasil perhitungan periode-periode yang sudah final di masa lalu.
+8. Spesifikasi Impor & Ekspor Data
+8.1 Prinsip Umum
+• Impor dilakukan berbasis berkas (Excel .xlsx / CSV) karena pada fase awal tidak ada integrasi API
+langsung ke SIMRS.
+• Sistem menyediakan template baku yang dapat diunduh, agar format data yang diekspor dari SIMRS
+dapat disesuaikan/dipetakan sebelum diunggah ke PINUS.
+• Setiap unggahan melalui tahap: (1) parsing & pengecekan struktur kolom, (2) validasi nilai &
+referensi ke master data, (3) pratinjau ringkasan sebelum dikonfirmasi, (4) commit data ke sistem.
+• Baris data yang gagal validasi tidak menggagalkan keseluruhan proses; sistem menampilkan daftar
+baris bermasalah beserta alasan, dan mengizinkan unggah ulang berkas perbaikan (partial
+correction).
+8.2 Contoh Struktur Data Impor Utama (Transaksi Layanan)
+Kolom Keterangan
+Tanggal Layanan Tanggal pelaksanaan tindakan/layanan.
+Kode Unit Kerja Merujuk ke master unit kerja (mis. IGD, Rawat Inap, IBS).
+Kode/No. RM Pasien Identitas pasien (untuk audit & anti-duplikasi, bukan untuk analitik klinis).
+Jenis Layanan/Tindakan Nama layanan/tindakan sesuai daftar tarif.
+Status Penjaminan JKN atau Non-JKN.
+Nilai Tarif/Klaim Nilai tarif reguler atau nilai klaim (INA-CBGs) terkait.
+Kode Pegawai Pelaksana Merujuk ke master pegawai; dapat lebih dari satu baris bila melibatkan
+beberapa peran (DPJP, operator, co-operator, anestesi, perawat pelaksana).
+Peran dalam Tindakan Operator/co-operator/anestesi/DPJP/pelaksana, dsb. — menentukan
+persentase proporsi yang berlaku.
+8.3 Ekspor
+• Slip Jaspel individual (PDF) — per pegawai per periode.
+• Rekap per unit kerja (Excel) — untuk verifikasi Kepala Instalasi/Unit.
+• Rekap total per periode (Excel/PDF) — untuk dasar penatausahaan pembayaran oleh Bagian
+Keuangan BLUD.
+
+===== PAGE 13 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 13 dari 19
+• Data mentah hasil kalkulasi (CSV/Excel) — untuk kebutuhan audit atau analisis lanjutan.
+9. Ringkasan Metode Perhitungan (Acuan Regulasi)
+Bagian ini merangkum metode perhitungan sebagaimana diatur dalam regulasi acuan. Nilai persentase
+yang tercantum pada tabel di bawah merupakan rentang acuan nasional (Kepdirjen Yankes Kemenkes No.
+HK.02.02/D/286/2025) dan bukan angka final RSUD Lembang; nilai final wajib ditetapkan melalui
+Keputusan Bupati/Direktur dan dimasukkan sebagai parameter terkonfigurasi di dalam sistem.
+9.1 Insentif Tenaga Medis — Metode Proporsionalitas
+Untuk layanan JKN: nilai insentif diperoleh dari proporsi tertentu terhadap nilai klaim (konversi INA-CBGs)
+atau tarif layanan, dengan pembagian porsi yang memperhatikan komponen DPJP, perawat/tenaga
+kesehatan lain, serta manajemen. Untuk layanan Non-JKN: nilai insentif diperoleh dari proporsi tertentu
+terhadap tarif layanan yang berlaku. Berikut rentang acuan nasional per jenis unit layanan:
+Unit Layanan Proporsi JKN (acuan) Proporsi Non-JKN (acuan)
+Rawat Inap 10% – 15% 50% – 70%
+Rawat Jalan 15% – 20% 50% – 70%
+Rawat Intensif / NICU / PICU 10% – 20% 50% – 70%
+IGD — 50% – 70%
+IBS (Operator) 10% – 15% 20% – 30%
+IBS (Co-Operator) 4% – 10% 5% – 8%
+IBS (Anestesi) 4% – 5% 9% – 12%
+Radiologi 5% – 10% 10% – 15%
+Laboratorium Patologi Klinik 1% – 5% 5% – 8%
+Laboratorium Khusus 10% – 25% 20% – 30%
+Rehabilitasi Medik 5% – 10% 50% – 70%
+Tindakan di Luar Kamar Operasi 15% – 25% 20% – 30%
+Catatan: Sumber: Lampiran Kepdirjen Yankes Kemenkes No. HK.02.02/D/286/2025 (Tabel 9 & 10), sebagai
+rentang acuan nasional. [Medium confidence] — bukan angka yang sudah difinalisasi/ditetapkan secara resmi
+untuk RSUD Lembang dalam dokumen yang tersedia; perlu verifikasi melalui Keputusan Bupati/Direktur RSUD
+Lembang yang berlaku.
+9.2 Insentif Tenaga Kesehatan (Pendekatan Tim Kerja Unit)
+Pendapatan unit kerja dihitung terlebih dahulu (berdasarkan proporsi insentif dari total pendapatan unit),
+kemudian didistribusikan ke setiap individu berdasarkan tanggung jawab dan beban kerja, dengan
+mempertimbangkan job grade. Pola perhitungan pada dokumen acuan turut mengenal konsep porsi
+tetap dan porsi subsidi antar-unit (redistribusi sebagian alokasi tenaga kesehatan lintas unit, mis. 20%
+porsi tetap dan 80% porsi subsidi sebagai salah satu contoh pola yang ditemukan pada dokumen acuan
+Kemenkes), yang perlu dikonfirmasi apakah pola ini juga diadopsi RSUD Lembang.
+
+===== PAGE 14 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 14 dari 19
+9.3 Insentif Tenaga Administrasi/Struktural (Indeksing)
+Insentif = (Alokasi Insentif Kinerja Tenaga Administrasi) × (Skor Individu ÷ Total Skor Seluruh Pegawai
+Administrasi). Skor individu dihitung dari bobot: pengalaman & masa kerja, keterampilan/ilmu
+pengetahuan/perilaku, risiko kerja, tingkat kegawatdaruratan, jabatan yang disandang, dan hasil/capaian
+kinerja (kehadiran 40% + kualitas pelaksanaan kegiatan 60%), dinilai bulanan oleh atasan langsung.
+9.4 Penyesuaian terhadap Pagu & Minimum Requirement
+Apabila total hasil perhitungan Metode Proporsionalitas melebihi alokasi insentif kinerja yang tersedia
+pada periode berjalan, dilakukan penyesuaian secara proporsional terhadap seluruh penerima. Untuk
+dokter sub-spesialis, spesialis, umum, dan perawat mahir, berlaku ketentuan pendapatan minimum
+(minimum requirement) yang ditetapkan terpisah.
+9.5 Komponen Pengurang
+Kondisi Persentase Pengurangan
+Menjalani pembinaan/hukuman disiplin Sesuai keputusan hukuman disiplin yang
+berlaku
+Cuti (melahirkan/sakit/besar/haji/lainnya) ≥ 1 bulan 50%
+Terlibat perkelahian (selama masa pembinaan) 50%
+Mengikuti diklat > 1 bulan (selama masa diklat) 50%
+Tugas belajar dengan ketidakhadiran ≥3 hari/minggu 80%
+10. Kebutuhan Antarmuka Pengguna (UI/UX)
+10.1 Prinsip Desain
+• Identitas visual mengikuti filosofi PINUS: nuansa hijau (pinus/keasrian) dan biru (selaras logo RSUD
+Lembang), memberi kesan tenang, profesional, dan tepercaya.
+• Dashboard pegawai dirancang sederhana dan mudah dipahami tanpa latar belakang keuangan/IT —
+prioritaskan kejelasan angka dan rincian, bukan kepadatan informasi.
+• Desain responsif (mobile-friendly) mengingat sebagian besar pegawai (tenaga medis/keperawatan)
+mengakses dashboard transparansi melalui ponsel.
+• Halaman admin/verifikasi menekankan efisiensi kerja: tabel dengan filter/pencarian, indikator
+status visual, dan validasi inline.
+10.2 Halaman/Layar Utama
+• Login & manajemen akun (termasuk reset password).
+• Dashboard ringkasan sesuai peran (Admin, Verifikator, Keuangan, Direktur, Pegawai).
+• Halaman Master Data (pegawai, unit kerja, skema proporsi, job grade, aturan potongan).
+• Wizard Impor Data (unggah → validasi → pratinjau → konfirmasi).
+• Halaman Proses Kalkulasi & Simulasi per periode.
+
+===== PAGE 15 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 15 dari 19
+• Halaman Verifikasi/Approval berjenjang dengan riwayat catatan.
+• Dashboard Transparansi Pegawai (rincian & riwayat Jaspel pribadi, unduh slip).
+• Halaman Laporan & Ekspor.
+• Halaman Audit Log (untuk Admin/Auditor).
+11. Arsitektur & Teknologi yang Direkomendasikan
+11.1 Ringkasan Arsitektur
+Sistem dirancang dengan pendekatan clean architecture yang memisahkan lapisan presentasi (frontend),
+lapisan aplikasi/API (backend), lapisan domain (logika kalkulasi Jaspel sebagai modul inti yang terisolasi
+dan mudah diuji), serta lapisan data (basis data & penyimpanan berkas).
+11.2 Komponen Teknis
+Layer Teknologi Catatan
+Frontend Next.js (React), TypeScript
+SSR/SSG untuk dashboard publik-internal;
+komponen UI modern & responsif (mis. Tailwind
+CSS).
+Backend/API Node.js dengan NestJS
+Struktur modular (module per domain: master
+data, impor, kalkulasi, workflow, laporan); validasi
+input ketat (DTO + class-validator).
+Basis Data PostgreSQL (dapat dioperasikan via
+Supabase)
+Transaksi ACID penting untuk data finansial;
+gunakan tipe NUMERIC/DECIMAL untuk nilai uang,
+bukan FLOAT.
+Autentikasi &
+Otorisasi
+JWT/OAuth2 + RBAC kustom (atau
+Supabase Auth)
+Middleware pengecekan peran & kepemilikan data
+(mis. pegawai hanya akses data sendiri).
+Antrean Proses
+Latar (Job Queue) BullMQ (Redis) atau setara Untuk proses impor besar & kalkulasi periode agar
+tidak memblokir request HTTP.
+Pembuatan
+Dokumen (PDF)
+Library PDF generation (mis.
+Puppeteer/PDFKit) sisi backend Untuk slip Jaspel dan laporan cetak.
+Penyimpanan
+Berkas
+Object storage (mis. Supabase
+Storage/S3-compatible) Untuk berkas impor mentah dan arsip ekspor/slip.
+Observability Logging terstruktur, monitoring (mis.
+Sentry, Prometheus/Grafana)
+Untuk memantau proses kalkulasi periode &
+mendeteksi anomali lebih dini.
+CI/CD &
+Infrastruktur
+Containerization (Docker), pipeline
+CI/CD, staging environment terpisah
+dari produksi
+Pengujian otomatis (unit test untuk logika
+kalkulasi) wajib sebelum rilis ke produksi
+mengingat sensitivitas data finansial.
+11.3 Pertimbangan Khusus
+• Logika kalkulasi Jaspel harus ditulis sebagai modul domain murni (pure functions) yang terpisah dari
+framework, agar mudah diuji dengan unit test terhadap berbagai skenario (termasuk kasus tepi
+
+===== PAGE 16 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 16 dari 19
+seperti pegawai pindah unit di tengah periode, cuti sebagian bulan, dsb.) tanpa bergantung pada
+database/HTTP.
+• Seluruh nilai finansial disimpan dan dihitung dengan presisi desimal tetap untuk menghindari
+kesalahan pembulatan pada rekonsiliasi total.
+• Environment produksi harus memiliki cadangan (backup) basis data terjadwal dan diuji proses
+pemulihannya, mengingat data ini menjadi dasar pembayaran hak pegawai.
+12. Roadmap Pengembangan (Usulan Fase)
+Fase 1 — MVP (Minimum Viable Product)
+• Master data (pegawai, unit kerja, skema proporsi, job grade, aturan potongan).
+• Impor data SIMRS berbasis template + validasi.
+• Mesin kalkulasi inti untuk tenaga medis, tenaga kesehatan, dan administrasi.
+• Alur verifikasi & persetujuan berjenjang dasar.
+• Dashboard transparansi pegawai (versi dasar) & slip Jaspel PDF.
+• Ekspor rekap Excel/PDF.
+• Manajemen pengguna, RBAC, dan audit trail dasar.
+Fase 2 — Penyempurnaan
+• Simulasi what-if parameter proporsi.
+• Dashboard manajemen/analitik tren lanjutan.
+• Notifikasi in-app/email menyeluruh.
+• Penyesuaian proporsional otomatis atas pagu dengan visualisasi dampak.
+• Modul koreksi/adendum pasca-finalisasi dengan approval ulang.
+Fase 3 — Integrasi & Skalabilitas Lanjutan
+• Evaluasi integrasi API langsung ke SIMRS (menggantikan/mendampingi impor berkas).
+• Integrasi dengan sistem kepegawaian (kehadiran/cuti otomatis) dan sistem keuangan BLUD untuk
+penatausahaan pembayaran.
+• Aplikasi mobile companion (opsional) untuk dashboard transparansi pegawai.
+13. Risiko & Mitigasi
+Risiko Kemungkinan Dampak Mitigasi
+Perubahan regulasi
+proporsi/skema di tengah tahun
+berjalan
+Sedang Tinggi
+Desain parameter versioned/time-bound
+sejak awal (lihat Bagian 7) agar
+perubahan tidak memengaruhi data
+historis.
+Kualitas/konsistensi data ekspor
+SIMRS tidak stabil (format Tinggi Tinggi Validasi ketat pada tahap impor, template
+baku, dan koordinasi dengan tim SIMRS
+
+===== PAGE 17 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 17 dari 19
+Risiko Kemungkinan Dampak Mitigasi
+berubah-ubah) terkait format ekspor.
+Kesalahan perhitungan finansial
+berdampak pada kepercayaan
+pegawai
+Rendah–Sedang Sangat
+Tinggi
+Unit test menyeluruh terhadap logika
+kalkulasi, masa uji paralel (perhitungan
+manual vs sistem) sebelum go-live penuh.
+Resistensi pengguna terhadap
+perubahan proses manual ke
+digital
+Sedang Sedang
+Pelatihan bertahap, UI yang sederhana,
+pendampingan pada 1–2 siklus bulan
+pertama, serta periode berjalan paralel
+(sistem + manual).
+Kebocoran data finansial pegawai Rendah Sangat
+Tinggi
+RBAC ketat, enkripsi, audit log, dan
+pembatasan akses berbasis kepemilikan
+data.
+14. Asumsi & Ketergantungan
+14.1 Asumsi
+• SIMRS RSUD Lembang dapat menghasilkan ekspor data (Excel/CSV) yang memuat informasi minimal:
+jenis layanan, unit, status JKN/Non-JKN, tarif/nilai klaim, dan identitas pegawai pelaksana. [Perlu
+konfirmasi — struktur ekspor aktual SIMRS RSUD Lembang belum tersedia dalam dokumen yang
+dianalisis]
+• Nilai final persentase proporsi, bobot indeksing, dan minimum requirement untuk RSUD Lembang
+akan ditetapkan resmi melalui Keputusan Bupati/Direktur sebelum sistem digunakan untuk
+produksi, dan dapat dikonfigurasi tanpa perubahan kode.
+• Struktur organisasi dan alur persetujuan (siapa memverifikasi, siapa menyetujui) mengikuti struktur
+yang berlaku saat ini di RSUD Lembang dan dapat dikonfirmasi lebih lanjut.
+• Proses pembayaran aktual (transfer ke rekening pegawai) berada di luar cakupan PINUS; PINUS
+menghasilkan dasar/rekap yang menjadi input bagi proses pembayaran keuangan BLUD.
+14.2 Ketergantungan
+• Ketersediaan/kesiapan tim SIMRS untuk menyediakan ekspor data secara rutin dan konsisten setiap
+akhir bulan.
+• Penetapan resmi parameter proporsi dan bobot oleh manajemen/Bupati sebagai prasyarat
+konfigurasi sistem sebelum go-live.
+• Ketersediaan infrastruktur server/hosting dan kebijakan keamanan data internal RSUD
+Lembang/Dinas Kesehatan.
+15. Kriteria Penerimaan (Acceptance Criteria) — Tingkat Tinggi
+19. Admin dapat mengunggah data SIMRS satu periode penuh dan sistem menampilkan hasil validasi
+(baris berhasil/gagal) dalam waktu wajar tanpa proses manual tambahan.
+
+===== PAGE 18 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 18 dari 19
+20. Sistem menghasilkan perhitungan Jaspel per pegawai yang, untuk sampel data uji yang telah
+dihitung manual sebagai pembanding, menghasilkan nilai yang sama (toleransi pembulatan
+disepakati bersama).
+21. Setiap perubahan parameter, master data, dan hasil approval tercatat pada audit log dan dapat
+ditelusuri oleh Admin/Auditor.
+22. Data periode yang telah berstatus final tidak dapat diubah langsung oleh pengguna mana pun tanpa
+melalui mekanisme koreksi resmi.
+23. Pegawai dapat login dan melihat rincian Jaspel miliknya sendiri (dan tidak dapat melihat data
+pegawai lain) untuk periode yang telah dipublikasikan.
+24. Sistem dapat menghasilkan ekspor rekap per unit dan slip individual sesuai format yang disepakati,
+tanpa memerlukan pengolahan tambahan secara manual.
+16. Lampiran
+16.1 Glosarium
+Istilah Definisi
+BLUD Badan Layanan Umum Daerah — pola pengelolaan keuangan dengan fleksibilitas bagi
+unit pelayanan publik.
+Jaspel Jasa Pelayanan — komponen insentif kinerja bagi tenaga medis/kesehatan berbasis
+hasil layanan.
+Metode
+Proporsionalitas
+Metode pembayaran insentif menggunakan persentase tertentu dari
+penerimaan/pembayaran layanan.
+JKN Jaminan Kesehatan Nasional — skema pembiayaan layanan kesehatan melalui BPJS
+Kesehatan.
+INA-CBGs Indonesian Case Base Groups — sistem klasifikasi/tarif klaim untuk pembiayaan JKN.
+DPJP Dokter Penanggung Jawab Pasien.
+Job Grade Tingkatan/kelas jabatan yang memengaruhi bobot pembagian insentif tim kerja unit.
+Minimum Requirement Pendapatan minimum yang dijamin bagi kompetensi keahlian tertentu (mis. dokter
+spesialis, perawat mahir).
+KPI/KPII Key Performance Indicator / Key Performance Individual Indicator — ukuran capaian
+kinerja individu.
+SIMRS Sistem Informasi Manajemen Rumah Sakit — sumber data transaksi layanan yang
+diimpor ke PINUS.
+16.2 Dokumen Rujukan
+• Rancangan Peraturan Bupati Bandung Barat tentang Remunerasi BLUD pada UOBK RSUD Lembang
+(raperbub_remun_rsud_lembang).
+• Keputusan Direktur Jenderal Pelayanan Kesehatan Kemenkes No. HK.02.02/D/286/2025 tentang
+Petunjuk Teknis Remunerasi BLU Rumah Sakit (kepdirjen_keslan_remunerasi_2025_baru).
+
+===== PAGE 19 =====
+PRD — Aplikasi PINUS | RSUD Lembang
+Halaman 19 dari 19
+• Materi Penganggaran dan Penatausahaan Remunerasi RSUD Lembang (Taufik).
+• Materi Transformasi Remunerasi RSUD BLUD.
+• Materi Proporsi JKN dan Non-JKN.
+• Materi Remunerasi BLUD: Strategi dan Implementasi (Yanyan).
+• Workshop Remunerasi RSUD Lembang (Jhoni R.).
+Catatan: Dokumen PRD ini disusun berdasarkan sintesis materi project knowledge yang tersedia. Sejumlah poin
+— terutama nilai persentase final, struktur organisasi persetujuan, dan format ekspor SIMRS aktual —
+memerlukan konfirmasi langsung dengan manajemen dan tim SIMRS RSUD Lembang sebelum masuk tahap
+desain teknis rinci.

@@ -1,0 +1,309 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN_JASPEL
+  VERIFIER_UNIT
+  FINANCE
+  DIRECTOR
+  EMPLOYEE
+  AUDITOR
+}
+
+enum EmployeeCategory {
+  MEDICAL
+  HEALTHCARE
+  ADMINISTRATIVE
+  STRUCTURAL
+}
+
+enum EmploymentStatus {
+  PNS
+  PPPK
+  NON_ASN
+}
+
+enum PayerType {
+  JKN
+  NON_JKN
+}
+
+enum PeriodStatus {
+  DRAFT
+  READY_FOR_UNIT_VERIFICATION
+  READY_FOR_FINANCE_VERIFICATION
+  READY_FOR_DIRECTOR_APPROVAL
+  FINALIZED
+  PUBLISHED
+}
+
+enum ImportSourceType {
+  SERVICE
+  ATTENDANCE
+  PERFORMANCE
+}
+
+enum ImportStatus {
+  DRAFT
+  PROCESSED
+  FAILED
+}
+
+enum ApprovalLevel {
+  UNIT
+  FINANCE
+  DIRECTOR
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  username     String    @unique
+  passwordHash String
+  fullName     String
+  role         Role
+  isActive     Boolean   @default(true)
+  employeeId   String?   @unique
+  workUnitId   String?
+  employee     Employee? @relation(fields: [employeeId], references: [id])
+  workUnit     WorkUnit? @relation(fields: [workUnitId], references: [id])
+  auditLogs    AuditLog[]
+  periods      CalculationPeriod[] @relation("PeriodCreator")
+  imports      ImportBatch[]
+  approvals    ApprovalStep[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model WorkUnit {
+  id            String             @id @default(uuid())
+  code          String             @unique
+  name          String
+  serviceType   String
+  employees     Employee[]
+  users         User[]
+  schemes       ProportionScheme[]
+  transactions  ServiceTransaction[]
+  results       CalculationResult[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+}
+
+model JobGrade {
+  id              String      @id @default(uuid())
+  code            String      @unique
+  name            String
+  weight          Decimal     @db.Decimal(12, 4)
+  employees       Employee[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Employee {
+  id                 String               @id @default(uuid())
+  employeeNumber     String               @unique
+  nationalId         String?
+  fullName           String
+  category           EmployeeCategory
+  profession         String?
+  specialization     String?
+  position           String?
+  employmentStatus   EmploymentStatus
+  startDate          DateTime
+  minimumGuarantee   Decimal?             @db.Decimal(14, 2)
+  isActive           Boolean              @default(true)
+  workUnitId         String
+  jobGradeId         String?
+  user               User?
+  workUnit           WorkUnit             @relation(fields: [workUnitId], references: [id])
+  jobGrade           JobGrade?            @relation(fields: [jobGradeId], references: [id])
+  transactions       ServiceTransaction[]
+  attendanceRecords  AttendanceRecord[]
+  performanceScores  PerformanceScore[]
+  results            CalculationResult[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+}
+
+model ProportionScheme {
+  id               String      @id @default(uuid())
+  workUnitId       String
+  name             String
+  serviceType      String
+  roleInService    String
+  payerType        PayerType
+  percentage       Decimal     @db.Decimal(7, 4)
+  effectiveFrom    DateTime
+  effectiveTo      DateTime?
+  workUnit         WorkUnit    @relation(fields: [workUnitId], references: [id])
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model DeductionRule {
+  id               String      @id @default(uuid())
+  code             String      @unique
+  name             String
+  description      String
+  percentage       Decimal     @db.Decimal(7, 4)
+  effectiveFrom    DateTime
+  effectiveTo      DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+model CalculationPeriod {
+  id                    String              @id @default(uuid())
+  month                 Int
+  year                  Int
+  label                 String              @unique
+  budgetCap             Decimal             @db.Decimal(14, 2)
+  healthcarePool        Decimal             @db.Decimal(14, 2)
+  administrativePool    Decimal             @db.Decimal(14, 2)
+  status                PeriodStatus        @default(DRAFT)
+  createdById           String
+  finalizedAt           DateTime?
+  createdBy             User                @relation("PeriodCreator", fields: [createdById], references: [id])
+  importBatches         ImportBatch[]
+  transactions          ServiceTransaction[]
+  attendanceRecords     AttendanceRecord[]
+  performanceScores     PerformanceScore[]
+  results               CalculationResult[]
+  approvals             ApprovalStep[]
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  @@unique([month, year])
+}
+
+model ImportBatch {
+  id              String            @id @default(uuid())
+  periodId        String
+  sourceType      ImportSourceType
+  fileName        String
+  status          ImportStatus      @default(DRAFT)
+  totalRows       Int               @default(0)
+  successRows     Int               @default(0)
+  failedRows      Int               @default(0)
+  errorSummary    Json?
+  uploadedById    String
+  period          CalculationPeriod @relation(fields: [periodId], references: [id])
+  uploadedBy      User              @relation(fields: [uploadedById], references: [id])
+  transactions    ServiceTransaction[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model ServiceTransaction {
+  id                String            @id @default(uuid())
+  periodId          String
+  importBatchId     String?
+  workUnitId        String
+  employeeId        String
+  serviceDate       DateTime
+  patientReference  String
+  serviceType       String
+  roleInService     String
+  payerType         PayerType
+  tariff            Decimal           @db.Decimal(14, 2)
+  quantity          Int               @default(1)
+  period            CalculationPeriod @relation(fields: [periodId], references: [id])
+  importBatch       ImportBatch?      @relation(fields: [importBatchId], references: [id])
+  workUnit          WorkUnit          @relation(fields: [workUnitId], references: [id])
+  employee          Employee          @relation(fields: [employeeId], references: [id])
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+model AttendanceRecord {
+  id                 String            @id @default(uuid())
+  periodId           String
+  employeeId         String
+  attendanceScore    Decimal           @db.Decimal(7, 4)
+  leaveDays          Int               @default(0)
+  disciplinaryAction Boolean           @default(false)
+  trainingMonths     Int               @default(0)
+  studyDaysPerWeek   Int               @default(0)
+  period             CalculationPeriod @relation(fields: [periodId], references: [id])
+  employee           Employee          @relation(fields: [employeeId], references: [id])
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@unique([periodId, employeeId])
+}
+
+model PerformanceScore {
+  id               String            @id @default(uuid())
+  periodId         String
+  employeeId       String
+  attendanceWeight Decimal           @db.Decimal(7, 4)
+  qualityWeight    Decimal           @db.Decimal(7, 4)
+  finalScore       Decimal           @db.Decimal(7, 4)
+  period           CalculationPeriod @relation(fields: [periodId], references: [id])
+  employee         Employee          @relation(fields: [employeeId], references: [id])
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@unique([periodId, employeeId])
+}
+
+model CalculationResult {
+  id                String            @id @default(uuid())
+  periodId          String
+  employeeId        String
+  workUnitId        String
+  grossAmount       Decimal           @db.Decimal(14, 2)
+  deductionAmount   Decimal           @db.Decimal(14, 2)
+  adjustmentAmount  Decimal           @db.Decimal(14, 2)
+  finalAmount       Decimal           @db.Decimal(14, 2)
+  details           Json
+  formulaSnapshot   Json
+  period            CalculationPeriod @relation(fields: [periodId], references: [id])
+  employee          Employee          @relation(fields: [employeeId], references: [id])
+  workUnit          WorkUnit          @relation(fields: [workUnitId], references: [id])
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@unique([periodId, employeeId])
+}
+
+model ApprovalStep {
+  id            String            @id @default(uuid())
+  periodId      String
+  level         ApprovalLevel
+  status        ApprovalStatus    @default(PENDING)
+  note          String?
+  actedById     String?
+  actedAt       DateTime?
+  period        CalculationPeriod @relation(fields: [periodId], references: [id])
+  actedBy       User?             @relation(fields: [actedById], references: [id])
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([periodId, level])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorId     String?
+  action      String
+  entityType  String
+  entityId    String
+  before      Json?
+  after       Json?
+  createdAt   DateTime @default(now())
+  actor       User?    @relation(fields: [actorId], references: [id])
+}

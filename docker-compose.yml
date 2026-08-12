@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pinus-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pinus
+      POSTGRES_USER: pinus
+      POSTGRES_PASSWORD: pinus
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: /workspace
+      dockerfile: /workspace/apps/api/Dockerfile
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql://pinus:pinus@postgres:5432/pinus?schema=public
+      JWT_SECRET: super-secret-pinus
+      PORT: 3001
+      FRONTEND_URL: http://localhost:3000
+      COOKIE_SECURE: "false"
+    ports:
+      - "3001:3001"
+
+  web:
+    build:
+      context: /workspace
+      dockerfile: /workspace/apps/web/Dockerfile
+    depends_on:
+      - api
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres-data:
