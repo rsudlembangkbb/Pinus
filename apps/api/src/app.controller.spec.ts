@@ -15,8 +15,13 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return healthy status payload', () => {
+      expect(appController.getHealth()).toEqual(
+        expect.objectContaining({
+          name: 'PINUS API',
+          status: 'ok',
+        }),
+      );
     });
   });
 });

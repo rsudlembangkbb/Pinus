@@ -119,7 +119,9 @@ export class PinusService {
 
   private ensureRole(user: AuthenticatedUser, roles: Role[]) {
     if (!roles.includes(user.role)) {
-      throw new ForbiddenException('Peran Anda tidak diizinkan untuk aksi ini.');
+      throw new ForbiddenException(
+        'Peran Anda tidak diizinkan untuk aksi ini.',
+      );
     }
   }
 
@@ -154,23 +156,29 @@ export class PinusService {
       (accumulator, result) => {
         accumulator.total += Number(result.finalAmount);
         const key = result.employee.category;
-        accumulator.byCategory[key] = (accumulator.byCategory[key] ?? 0) + Number(result.finalAmount);
+        accumulator.byCategory[key] =
+          (accumulator.byCategory[key] ?? 0) + Number(result.finalAmount);
         return accumulator;
       },
       {
         total: 0,
-        byCategory: {} as Record<string, number>,
+        byCategory: {} as Record<EmployeeCategory, number>,
       },
-    ) ?? { total: 0, byCategory: {} };
+    ) ?? { total: 0, byCategory: {} as Record<EmployeeCategory, number> };
 
     const myLatest = user.employeeId
       ? await this.prisma.calculationResult.findFirst({
           where: {
             employeeId: user.employeeId,
-            period: { status: { in: [PeriodStatus.FINALIZED, PeriodStatus.PUBLISHED] } },
+            period: {
+              status: { in: [PeriodStatus.FINALIZED, PeriodStatus.PUBLISHED] },
+            },
           },
           include: { period: true },
-          orderBy: [{ period: { year: 'desc' } }, { period: { month: 'desc' } }],
+          orderBy: [
+            { period: { year: 'desc' } },
+            { period: { month: 'desc' } },
+          ],
         })
       : null;
 
@@ -208,7 +216,9 @@ export class PinusService {
   }
 
   async listJobGrades() {
-    return this.serialize(await this.prisma.jobGrade.findMany({ orderBy: { weight: 'desc' } }));
+    return this.serialize(
+      await this.prisma.jobGrade.findMany({ orderBy: { weight: 'desc' } }),
+    );
   }
 
   async createJobGrade(user: AuthenticatedUser, input: CreateJobGradeInput) {
@@ -253,7 +263,9 @@ export class PinusService {
         ...input,
         startDate: new Date(input.startDate),
         minimumGuarantee:
-          input.minimumGuarantee !== undefined ? this.toDecimal(input.minimumGuarantee) : undefined,
+          input.minimumGuarantee !== undefined
+            ? this.toDecimal(input.minimumGuarantee)
+            : undefined,
       },
       include: {
         workUnit: true,
@@ -289,7 +301,9 @@ export class PinusService {
         ...input,
         percentage: this.toDecimal(input.percentage),
         effectiveFrom: new Date(input.effectiveFrom),
-        effectiveTo: input.effectiveTo ? new Date(input.effectiveTo) : undefined,
+        effectiveTo: input.effectiveTo
+          ? new Date(input.effectiveTo)
+          : undefined,
       },
       include: { workUnit: true },
     });
@@ -306,10 +320,15 @@ export class PinusService {
   }
 
   async listDeductionRules() {
-    return this.serialize(await this.prisma.deductionRule.findMany({ orderBy: { code: 'asc' } }));
+    return this.serialize(
+      await this.prisma.deductionRule.findMany({ orderBy: { code: 'asc' } }),
+    );
   }
 
-  async createDeductionRule(user: AuthenticatedUser, input: CreateDeductionRuleInput) {
+  async createDeductionRule(
+    user: AuthenticatedUser,
+    input: CreateDeductionRuleInput,
+  ) {
     this.ensureRole(user, [Role.SUPER_ADMIN, Role.ADMIN_JASPEL]);
 
     const created = await this.prisma.deductionRule.create({
@@ -317,7 +336,9 @@ export class PinusService {
         ...input,
         percentage: this.toDecimal(input.percentage),
         effectiveFrom: new Date(input.effectiveFrom),
-        effectiveTo: input.effectiveTo ? new Date(input.effectiveTo) : undefined,
+        effectiveTo: input.effectiveTo
+          ? new Date(input.effectiveTo)
+          : undefined,
       },
     });
 
@@ -405,17 +426,25 @@ export class PinusService {
     }
 
     if (user.role === Role.EMPLOYEE && user.employeeId) {
-      period.results = period.results.filter((result) => result.employeeId === user.employeeId);
+      period.results = period.results.filter(
+        (result) => result.employeeId === user.employeeId,
+      );
     }
 
     if (user.role === Role.VERIFIER_UNIT && user.workUnitId) {
-      period.results = period.results.filter((result) => result.workUnitId === user.workUnitId);
+      period.results = period.results.filter(
+        (result) => result.workUnitId === user.workUnitId,
+      );
     }
 
     return this.serialize(period);
   }
 
-  async upsertAttendance(user: AuthenticatedUser, periodId: string, rows: UpsertAttendanceInput[]) {
+  async upsertAttendance(
+    user: AuthenticatedUser,
+    periodId: string,
+    rows: UpsertAttendanceInput[],
+  ) {
     this.ensureRole(user, [Role.SUPER_ADMIN, Role.ADMIN_JASPEL]);
 
     await this.prisma.$transaction(
@@ -458,7 +487,11 @@ export class PinusService {
     return { message: 'Data kehadiran berhasil disimpan.' };
   }
 
-  async upsertPerformance(user: AuthenticatedUser, periodId: string, rows: UpsertPerformanceInput[]) {
+  async upsertPerformance(
+    user: AuthenticatedUser,
+    periodId: string,
+    rows: UpsertPerformanceInput[],
+  ) {
     this.ensureRole(user, [Role.SUPER_ADMIN, Role.ADMIN_JASPEL]);
 
     await this.prisma.$transaction(
@@ -476,14 +509,18 @@ export class PinusService {
             attendanceWeight: this.toDecimal(row.attendanceWeight),
             qualityWeight: this.toDecimal(row.qualityWeight),
             finalScore: this.toDecimal(
-              this.decimal(row.attendanceWeight).mul(0.4).plus(this.decimal(row.qualityWeight).mul(0.6)),
+              this.decimal(row.attendanceWeight)
+                .mul(0.4)
+                .plus(this.decimal(row.qualityWeight).mul(0.6)),
             ),
           },
           update: {
             attendanceWeight: this.toDecimal(row.attendanceWeight),
             qualityWeight: this.toDecimal(row.qualityWeight),
             finalScore: this.toDecimal(
-              this.decimal(row.attendanceWeight).mul(0.4).plus(this.decimal(row.qualityWeight).mul(0.6)),
+              this.decimal(row.attendanceWeight)
+                .mul(0.4)
+                .plus(this.decimal(row.qualityWeight).mul(0.6)),
             ),
           },
         }),
@@ -512,7 +549,9 @@ export class PinusService {
       throw new BadRequestException('File impor wajib diunggah.');
     }
 
-    const period = await this.prisma.calculationPeriod.findUnique({ where: { id: periodId } });
+    const period = await this.prisma.calculationPeriod.findUnique({
+      where: { id: periodId },
+    });
     if (!period) {
       throw new NotFoundException('Periode tidak ditemukan.');
     }
@@ -546,43 +585,55 @@ export class PinusService {
     );
 
     const errors: Array<{ row: number; message: string }> = [];
-    const preparedRows = rows.flatMap((row, index) => {
-      const workUnitId = unitMap.get(String(row['Kode Unit Kerja'] ?? '').trim());
-      const employeeId = employeeMap.get(String(row['Kode Pegawai Pelaksana'] ?? '').trim());
+    const preparedRows: Prisma.ServiceTransactionCreateManyInput[] =
+      rows.flatMap((row, index) => {
+        const workUnitId = unitMap.get(
+          this.readCell(row, 'Kode Unit Kerja').trim(),
+        );
+        const employeeId = employeeMap.get(
+          this.readCell(row, 'Kode Pegawai Pelaksana').trim(),
+        );
 
-      if (!workUnitId || !employeeId) {
-        errors.push({
-          row: index + 1,
-          message: 'Kode unit kerja atau kode pegawai tidak ditemukan di master data.',
-        });
-        return [];
-      }
+        if (!workUnitId || !employeeId) {
+          errors.push({
+            row: index + 1,
+            message:
+              'Kode unit kerja atau kode pegawai tidak ditemukan di master data.',
+          });
+          return [];
+        }
 
-      const payerValue = String(row['Status Penjaminan'] ?? '').trim().toUpperCase();
-      if (payerValue !== 'JKN' && payerValue !== 'NON_JKN') {
-        errors.push({
-          row: index + 1,
-          message: 'Status penjaminan harus JKN atau NON_JKN.',
-        });
-        return [];
-      }
+        const payerValue = this.readCell(row, 'Status Penjaminan')
+          .trim()
+          .toUpperCase();
+        if (payerValue !== 'JKN' && payerValue !== 'NON_JKN') {
+          errors.push({
+            row: index + 1,
+            message: 'Status penjaminan harus JKN atau NON_JKN.',
+          });
+          return [];
+        }
 
-      return [
-        {
-          periodId,
-          importBatchId: batch.id,
-          workUnitId,
-          employeeId,
-          serviceDate: new Date(String(row['Tanggal Layanan'])),
-          patientReference: String(row['Kode/No. RM Pasien'] ?? `AUTO-${index + 1}`),
-          serviceType: String(row['Jenis Layanan/Tindakan'] ?? '').trim(),
-          roleInService: String(row['Peran dalam Tindakan'] ?? '').trim(),
-          payerType: payerValue,
-          tariff: this.toDecimal(Number(row['Nilai Tarif/Klaim'] ?? 0)),
-          quantity: Number(row['Jumlah Pasien/Tindakan'] ?? 1),
-        },
-      ];
-    });
+        return [
+          {
+            periodId,
+            importBatchId: batch.id,
+            workUnitId,
+            employeeId,
+            serviceDate: new Date(String(row['Tanggal Layanan'])),
+            patientReference: this.readCell(
+              row,
+              'Kode/No. RM Pasien',
+              `AUTO-${index + 1}`,
+            ),
+            serviceType: this.readCell(row, 'Jenis Layanan/Tindakan').trim(),
+            roleInService: this.readCell(row, 'Peran dalam Tindakan').trim(),
+            payerType: payerValue,
+            tariff: this.toDecimal(Number(row['Nilai Tarif/Klaim'] ?? 0)),
+            quantity: Number(row['Jumlah Pasien/Tindakan'] ?? 1),
+          },
+        ];
+      });
 
     if (preparedRows.length) {
       await this.prisma.serviceTransaction.createMany({
@@ -605,7 +656,12 @@ export class PinusService {
       action: 'IMPORT_SERVICE_TRANSACTIONS',
       entityType: 'ImportBatch',
       entityId: batch.id,
-      after: { fileName: file.originalname, totalRows: rows.length, successRows: preparedRows.length, errors },
+      after: {
+        fileName: file.originalname,
+        totalRows: rows.length,
+        successRows: preparedRows.length,
+        errors,
+      },
     });
 
     return {
@@ -623,15 +679,36 @@ export class PinusService {
         columns: true,
         skip_empty_lines: true,
         trim: true,
-      }) as Record<string, unknown>[];
+      });
     }
 
     const workbook = XLSX.read(file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
-    return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]) as Record<string, unknown>[];
+    return XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
   }
 
-  private async getApplicableDeductionPercentage(periodId: string, employeeId: string) {
+  private readCell(
+    row: Record<string, unknown>,
+    key: string,
+    fallback = '',
+  ): string {
+    const value = row[key];
+
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+
+    return fallback;
+  }
+
+  private async getApplicableDeductionPercentage(
+    periodId: string,
+    employeeId: string,
+  ) {
     const [attendance, rules] = await Promise.all([
       this.prisma.attendanceRecord.findUnique({
         where: { periodId_employeeId: { periodId, employeeId } },
@@ -686,51 +763,77 @@ export class PinusService {
       throw new NotFoundException('Periode tidak ditemukan.');
     }
 
-    const [employees, transactions, schemes, performanceScores] = await Promise.all([
-      this.prisma.employee.findMany({
-        where: { isActive: true },
-        include: { jobGrade: true, workUnit: true },
-      }),
-      this.prisma.serviceTransaction.findMany({
-        where: { periodId },
-        include: { workUnit: true, employee: true },
-      }),
-      this.prisma.proportionScheme.findMany({
-        where: {
-          effectiveFrom: { lte: new Date(period.year, period.month - 1, 31) },
-          OR: [{ effectiveTo: null }, { effectiveTo: { gte: new Date(period.year, period.month - 1, 1) } }],
-        },
-      }),
-      this.prisma.performanceScore.findMany({
-        where: { periodId },
-      }),
-    ]);
+    const [employees, transactions, schemes, performanceScores] =
+      await Promise.all([
+        this.prisma.employee.findMany({
+          where: { isActive: true },
+          include: { jobGrade: true, workUnit: true },
+        }),
+        this.prisma.serviceTransaction.findMany({
+          where: { periodId },
+          include: { workUnit: true, employee: true },
+        }),
+        this.prisma.proportionScheme.findMany({
+          where: {
+            effectiveFrom: { lte: new Date(period.year, period.month - 1, 31) },
+            OR: [
+              { effectiveTo: null },
+              {
+                effectiveTo: {
+                  gte: new Date(period.year, period.month - 1, 1),
+                },
+              },
+            ],
+          },
+        }),
+        this.prisma.performanceScore.findMany({
+          where: { periodId },
+        }),
+      ]);
 
     if (!employees.length) {
       throw new BadRequestException('Master pegawai belum tersedia.');
     }
 
-    const schemeKey = (workUnitId: string, serviceType: string, roleInService: string, payerType: string) =>
+    const schemeKey = (
+      workUnitId: string,
+      serviceType: string,
+      roleInService: string,
+      payerType: string,
+    ) =>
       `${workUnitId}::${serviceType.toLowerCase()}::${roleInService.toLowerCase()}::${payerType}`;
 
     const schemeMap = new Map(
       schemes.map((scheme) => [
-        schemeKey(scheme.workUnitId, scheme.serviceType, scheme.roleInService, scheme.payerType),
+        schemeKey(
+          scheme.workUnitId,
+          scheme.serviceType,
+          scheme.roleInService,
+          scheme.payerType,
+        ),
         new Decimal(scheme.percentage.toString()).div(100),
       ]),
     );
 
     const performanceMap = new Map(
-      performanceScores.map((score) => [score.employeeId, new Decimal(score.finalScore.toString())]),
+      performanceScores.map((score) => [
+        score.employeeId,
+        new Decimal(score.finalScore.toString()),
+      ]),
     );
 
-    const healthcareEmployees = employees.filter((item) => item.category === EmployeeCategory.HEALTHCARE);
-    const adminEmployees = employees.filter((item) =>
-      [EmployeeCategory.ADMINISTRATIVE, EmployeeCategory.STRUCTURAL].includes(item.category),
+    const healthcareEmployees = employees.filter(
+      (item) => item.category === EmployeeCategory.HEALTHCARE,
+    );
+    const adminEmployees = employees.filter(
+      (item) =>
+        item.category === EmployeeCategory.ADMINISTRATIVE ||
+        item.category === EmployeeCategory.STRUCTURAL,
     );
 
     const healthcareWeightTotal = healthcareEmployees.reduce(
-      (total, employee) => total.plus(employee.jobGrade?.weight.toString() ?? '1'),
+      (total, employee) =>
+        total.plus(employee.jobGrade?.weight.toString() ?? '1'),
       new Decimal(0),
     );
     const adminWeightTotal = adminEmployees.reduce(
@@ -741,7 +844,9 @@ export class PinusService {
     const interimResults = await Promise.all(
       employees.map(async (employee) => {
         let gross = new Decimal(0);
-        const employeeTransactions = transactions.filter((transaction) => transaction.employeeId === employee.id);
+        const employeeTransactions = transactions.filter(
+          (transaction) => transaction.employeeId === employee.id,
+        );
 
         if (employee.category === EmployeeCategory.MEDICAL) {
           gross = employeeTransactions.reduce((sum, transaction) => {
@@ -762,14 +867,20 @@ export class PinusService {
             );
           }, new Decimal(0));
         } else if (employee.category === EmployeeCategory.HEALTHCARE) {
-          const weight = new Decimal(employee.jobGrade?.weight.toString() ?? '1');
+          const weight = new Decimal(
+            employee.jobGrade?.weight.toString() ?? '1',
+          );
           gross = healthcareWeightTotal.greaterThan(0)
-            ? new Decimal(period.healthcarePool.toString()).mul(weight.div(healthcareWeightTotal))
+            ? new Decimal(period.healthcarePool.toString()).mul(
+                weight.div(healthcareWeightTotal),
+              )
             : new Decimal(0);
         } else {
           const score = performanceMap.get(employee.id) ?? new Decimal(1);
           gross = adminWeightTotal.greaterThan(0)
-            ? new Decimal(period.administrativePool.toString()).mul(score.div(adminWeightTotal))
+            ? new Decimal(period.administrativePool.toString()).mul(
+                score.div(adminWeightTotal),
+              )
             : new Decimal(0);
         }
 
@@ -780,7 +891,10 @@ export class PinusService {
           gross = minimumGuarantee;
         }
 
-        const deductionPercentage = await this.getApplicableDeductionPercentage(periodId, employee.id);
+        const deductionPercentage = await this.getApplicableDeductionPercentage(
+          periodId,
+          employee.id,
+        );
         const deductionAmount = gross.mul(deductionPercentage.div(100));
         const netBeforeAdjustment = gross.minus(deductionAmount);
 
@@ -800,18 +914,23 @@ export class PinusService {
       }),
     );
 
-    const grandTotal = interimResults.reduce((sum, item) => sum.plus(item.netBeforeAdjustment), new Decimal(0));
+    const grandTotal = interimResults.reduce(
+      (sum, item) => sum.plus(item.netBeforeAdjustment),
+      new Decimal(0),
+    );
     const budgetCap = new Decimal(period.budgetCap.toString());
-    const adjustmentFactor = grandTotal.greaterThan(budgetCap) && grandTotal.greaterThan(0)
-      ? budgetCap.div(grandTotal)
-      : new Decimal(1);
+    const adjustmentFactor =
+      grandTotal.greaterThan(budgetCap) && grandTotal.greaterThan(0)
+        ? budgetCap.div(grandTotal)
+        : new Decimal(1);
 
     await this.prisma.$transaction(async (transaction) => {
       await transaction.calculationResult.deleteMany({ where: { periodId } });
 
       for (const result of interimResults) {
         const adjustedFinal = result.netBeforeAdjustment.mul(adjustmentFactor);
-        const adjustmentAmount = result.netBeforeAdjustment.minus(adjustedFinal);
+        const adjustmentAmount =
+          result.netBeforeAdjustment.minus(adjustedFinal);
 
         await transaction.calculationResult.create({
           data: {
@@ -822,11 +941,11 @@ export class PinusService {
             deductionAmount: this.toDecimal(result.deductionAmount),
             adjustmentAmount: this.toDecimal(adjustmentAmount),
             finalAmount: this.toDecimal(adjustedFinal),
-            details: result.details as Prisma.JsonObject,
+            details: result.details,
             formulaSnapshot: {
               adjustmentFactor: adjustmentFactor.toFixed(6),
               budgetCap: budgetCap.toFixed(2),
-            } as Prisma.JsonObject,
+            },
           },
         });
       }
@@ -842,7 +961,10 @@ export class PinusService {
       action: 'CALCULATE_PERIOD',
       entityType: 'CalculationPeriod',
       entityId: periodId,
-      after: { adjustmentFactor: adjustmentFactor.toString(), resultCount: interimResults.length },
+      after: {
+        adjustmentFactor: adjustmentFactor.toString(),
+        resultCount: interimResults.length,
+      },
     });
 
     return this.getPeriodResults(periodId, user);
@@ -890,9 +1012,15 @@ export class PinusService {
     let nextStatus = period.status;
     if (level === ApprovalLevel.UNIT && status === ApprovalStatus.APPROVED) {
       nextStatus = PeriodStatus.READY_FOR_FINANCE_VERIFICATION;
-    } else if (level === ApprovalLevel.FINANCE && status === ApprovalStatus.APPROVED) {
+    } else if (
+      level === ApprovalLevel.FINANCE &&
+      status === ApprovalStatus.APPROVED
+    ) {
       nextStatus = PeriodStatus.READY_FOR_DIRECTOR_APPROVAL;
-    } else if (level === ApprovalLevel.DIRECTOR && status === ApprovalStatus.APPROVED) {
+    } else if (
+      level === ApprovalLevel.DIRECTOR &&
+      status === ApprovalStatus.APPROVED
+    ) {
       nextStatus = PeriodStatus.PUBLISHED;
     } else if (status === ApprovalStatus.REJECTED) {
       nextStatus = PeriodStatus.DRAFT;
@@ -902,7 +1030,8 @@ export class PinusService {
       where: { id: periodId },
       data: {
         status: nextStatus,
-        finalizedAt: nextStatus === PeriodStatus.PUBLISHED ? new Date() : undefined,
+        finalizedAt:
+          nextStatus === PeriodStatus.PUBLISHED ? new Date() : undefined,
       },
     });
 
@@ -919,7 +1048,9 @@ export class PinusService {
 
   async getMySlips(user: AuthenticatedUser) {
     if (!user.employeeId) {
-      throw new ForbiddenException('Akun Anda belum terhubung ke data pegawai.');
+      throw new ForbiddenException(
+        'Akun Anda belum terhubung ke data pegawai.',
+      );
     }
 
     const slips = await this.prisma.calculationResult.findMany({
@@ -942,7 +1073,9 @@ export class PinusService {
 
   async downloadSlip(periodId: string, user: AuthenticatedUser) {
     if (!user.employeeId) {
-      throw new ForbiddenException('Akun Anda belum terhubung ke data pegawai.');
+      throw new ForbiddenException(
+        'Akun Anda belum terhubung ke data pegawai.',
+      );
     }
 
     const result = await this.prisma.calculationResult.findUnique({
@@ -998,7 +1131,11 @@ export class PinusService {
     return this.reportsService.generatePeriodWorkbook({
       periodLabel: period.label,
       rows: period.results
-        .filter((row) => (user.role === Role.VERIFIER_UNIT && user.workUnitId ? row.workUnitId === user.workUnitId : true))
+        .filter((row) =>
+          user.role === Role.VERIFIER_UNIT && user.workUnitId
+            ? row.workUnitId === user.workUnitId
+            : true,
+        )
         .map((row) => ({
           employeeNumber: row.employee.employeeNumber,
           employeeName: row.employee.fullName,

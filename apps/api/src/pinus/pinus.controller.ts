@@ -10,11 +10,22 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApprovalLevel, ApprovalStatus, EmployeeCategory, Role } from '@prisma/client';
+import {
+  ApprovalLevel,
+  ApprovalStatus,
+  EmployeeCategory,
+  Role,
+} from '@prisma/client';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { z } from 'zod';
-import { CurrentUser, JwtAuthGuard, Roles, RolesGuard, type AuthenticatedUser } from '../common/auth';
+import {
+  CurrentUser,
+  JwtAuthGuard,
+  Roles,
+  RolesGuard,
+  type AuthenticatedUser,
+} from '../common/auth';
 import { PinusService } from './pinus.service';
 
 const workUnitSchema = z.object({
@@ -117,7 +128,10 @@ export class PinusController {
   }
 
   @Post('work-units')
-  createWorkUnit(@CurrentUser() user: AuthenticatedUser, @Body() body: unknown) {
+  createWorkUnit(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: unknown,
+  ) {
     return this.pinusService.createWorkUnit(user, workUnitSchema.parse(body));
   }
 
@@ -127,7 +141,10 @@ export class PinusController {
   }
 
   @Post('job-grades')
-  createJobGrade(@CurrentUser() user: AuthenticatedUser, @Body() body: unknown) {
+  createJobGrade(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: unknown,
+  ) {
     return this.pinusService.createJobGrade(user, jobGradeSchema.parse(body));
   }
 
@@ -137,7 +154,10 @@ export class PinusController {
   }
 
   @Post('employees')
-  createEmployee(@CurrentUser() user: AuthenticatedUser, @Body() body: unknown) {
+  createEmployee(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: unknown,
+  ) {
     return this.pinusService.createEmployee(user, employeeSchema.parse(body));
   }
 
@@ -157,8 +177,14 @@ export class PinusController {
   }
 
   @Post('deduction-rules')
-  createDeductionRule(@CurrentUser() user: AuthenticatedUser, @Body() body: unknown) {
-    return this.pinusService.createDeductionRule(user, deductionRuleSchema.parse(body));
+  createDeductionRule(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: unknown,
+  ) {
+    return this.pinusService.createDeductionRule(
+      user,
+      deductionRuleSchema.parse(body),
+    );
   }
 
   @Get('periods')
@@ -185,7 +211,11 @@ export class PinusController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() body: unknown,
   ) {
-    return this.pinusService.upsertAttendance(user, periodId, attendanceSchema.parse(body));
+    return this.pinusService.upsertAttendance(
+      user,
+      periodId,
+      attendanceSchema.parse(body),
+    );
   }
 
   @Post('periods/:periodId/performance')
@@ -194,7 +224,11 @@ export class PinusController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() body: unknown,
   ) {
-    return this.pinusService.upsertPerformance(user, periodId, performanceSchema.parse(body));
+    return this.pinusService.upsertPerformance(
+      user,
+      periodId,
+      performanceSchema.parse(body),
+    );
   }
 
   @Post('periods/:periodId/import-transactions')
@@ -224,7 +258,13 @@ export class PinusController {
     @Body() body: unknown,
   ) {
     const payload = approvalSchema.parse(body);
-    return this.pinusService.submitApproval(periodId, level, payload.status, payload.note, user);
+    return this.pinusService.submitApproval(
+      periodId,
+      level,
+      payload.status,
+      payload.note,
+      user,
+    );
   }
 
   @Get('me/slips')
@@ -240,7 +280,10 @@ export class PinusController {
   ) {
     const buffer = await this.pinusService.downloadSlip(periodId, user);
     response.setHeader('Content-Type', 'application/pdf');
-    response.setHeader('Content-Disposition', `attachment; filename="slip-${periodId}.pdf"`);
+    response.setHeader(
+      'Content-Disposition',
+      `attachment; filename="slip-${periodId}.pdf"`,
+    );
     response.send(buffer);
   }
 
@@ -255,7 +298,10 @@ export class PinusController {
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );
-    response.setHeader('Content-Disposition', `attachment; filename="rekap-${periodId}.xlsx"`);
+    response.setHeader(
+      'Content-Disposition',
+      `attachment; filename="rekap-${periodId}.xlsx"`,
+    );
     response.send(buffer);
   }
 

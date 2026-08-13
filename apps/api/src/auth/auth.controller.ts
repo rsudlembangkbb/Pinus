@@ -8,7 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { z } from 'zod';
 import { AuthService } from './auth.service';
 import { CurrentUser, JwtAuthGuard } from '../common/auth';
