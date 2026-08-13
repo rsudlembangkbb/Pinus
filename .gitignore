@@ -1,0 +1,12 @@
+/node_modules
+/.wrangler
+/dist
+/coverage
+/.DS_Store
+/apps/web/node_modules
+/apps/web/dist
+/apps/api/node_modules
+/apps/api/.wrangler
+/apps/api/dist
+/packages/*/dist
+/tmp

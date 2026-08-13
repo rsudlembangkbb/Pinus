@@ -1,0 +1,16 @@
+name = "pinus-api"
+main = "src/index.ts"
+compatibility_date = "2026-08-13"
+
+[vars]
+APP_NAME = "PINUS"
+API_ORIGIN = "http://localhost:8787"
+WEB_ORIGIN = "http://localhost:5173"
+COOKIE_NAME = "pinus_session"
+COOKIE_SECURE = "false"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pinus-db"
+database_id = "local-pinus-db"
+migrations_dir = "migrations"
