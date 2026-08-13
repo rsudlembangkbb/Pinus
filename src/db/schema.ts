@@ -88,6 +88,8 @@ export const employees = sqliteTable(
     isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
     startDate: text('start_date'),
     syncedFromBarayaAt: integer('synced_from_baraya_at'),
+    /** Links to minimum_requirements.category, e.g. 'dokter_spesialis'; null = not subject to a minimum floor. */
+    minimumCategory: text('minimum_category'),
     ...timestamps
   },
   (t) => ({
@@ -185,6 +187,10 @@ export const calculationPeriods = sqliteTable(
     // verifying_keuangan -> verifying_direktur -> approved -> published -> locked
     bpjsPendingPolicy: text('bpjs_pending_policy').notNull().default('accrual'), // accrual|cash|hybrid
     jaspelBudgetCap: integer('jaspel_budget_cap'),
+    administrationAllocation: integer('administration_allocation'),
+    teamUnitProportionBps: integer('team_unit_proportion_bps').notNull().default(3000),
+    teamUnitFixedPortionBps: integer('team_unit_fixed_portion_bps').notNull().default(2000),
+    hybridDiscountBps: integer('hybrid_discount_bps').notNull().default(8000),
     openedBy: text('opened_by').references(() => users.id),
     publishedAt: integer('published_at'),
     lockedAt: integer('locked_at'),

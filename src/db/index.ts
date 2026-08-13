@@ -7,14 +7,16 @@ import * as schema from './schema';
  * request. Must only be called inside a request handler (route handler,
  * middleware) running on the Cloudflare Workers runtime.
  */
-export function getDb() {
-  const { env } = getCloudflareContext<CloudflareEnv>();
+export async function getDb() {
+  const { env } = await getCloudflareContext<CloudflareEnv>();
   return drizzle(env.DB, { schema });
 }
 
-export function getEnv(): CloudflareEnv {
-  const { env } = getCloudflareContext<CloudflareEnv>();
+export async function getEnv(): Promise<CloudflareEnv> {
+  const { env } = await getCloudflareContext<CloudflareEnv>();
   return env;
 }
+
+export type Db = Awaited<ReturnType<typeof getDb>>;
 
 export { schema };

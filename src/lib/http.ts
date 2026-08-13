@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { getEnv } from '@/db';
+import { eq } from 'drizzle-orm';
+import { getDb, getEnv, schema } from '@/db';
 import { SESSION_COOKIE, SessionPayload, verifySessionToken } from '@/lib/auth/session';
 import { RoleCode } from '@/lib/auth/roles';
 
@@ -20,13 +21,25 @@ export function jsonError(message: string, status = 400) {
   return NextResponse.json({ ok: false, error: message }, { status });
 }
 
-/** Resolves & verifies the current session from the request cookie. Throws ApiError(401) if absent/invalid. */
+/**
+ * Resolves & verifies the current session from the request cookie, and
+ * checks the token's embedded `tokenVersion` against the live value on the
+ * user record so that revoking access (deactivating a user, changing
+ * their role) takes effect immediately instead of waiting out the JWT's
+ * remaining validity window.
+ */
 export async function requireSession(): Promise<SessionPayload> {
-  const token = cookies().get(SESSION_COOKIE)?.value;
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) throw new ApiError(401, 'Belum masuk (login diperlukan).');
-  const env = getEnv();
+  const env = await getEnv();
   const payload = await verifySessionToken(token, env.JWT_SECRET);
   if (!payload) throw new ApiError(401, 'Sesi tidak valid atau kedaluwarsa.');
+
+  const db = await getDb();
+  const [user] = await db.select().from(schema.users).where(eq(schema.users.id, payload.sub)).limit(1);
+  if (!user || !user.isActive || user.tokenVersion !== payload.tokenVersion) {
+    throw new ApiError(401, 'Sesi tidak valid atau telah dicabut. Silakan masuk kembali.');
+  }
   return payload;
 }
 

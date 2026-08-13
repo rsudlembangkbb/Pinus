@@ -16,7 +16,7 @@ export const POST = withApi(async (req: NextRequest) => {
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return jsonError('Username/email dan kata sandi wajib diisi.', 422);
 
-  const db = getDb();
+  const db = await getDb();
   const identifier = parsed.data.identifier.trim().toLowerCase();
 
   const rows = await db
@@ -39,7 +39,7 @@ export const POST = withApi(async (req: NextRequest) => {
     return jsonError('Username/email atau kata sandi salah.', 401);
   }
 
-  const env = getEnv();
+  const env = await getEnv();
   const token = await createSessionToken(
     {
       sub: row.user.id,

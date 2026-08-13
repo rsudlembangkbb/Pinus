@@ -19,7 +19,7 @@ interface AuditParams {
  * sebelum/sesudah".
  */
 export async function writeAuditLog(params: AuditParams): Promise<void> {
-  const db = getDb();
+  const db = await getDb();
   await db.insert(schema.auditLogs).values({
     id: newId('aud'),
     actorUserId: params.actorUserId ?? null,

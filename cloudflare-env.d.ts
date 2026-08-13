@@ -2,6 +2,7 @@
 // Kept hand-written (rather than `wrangler types`) so it works without a
 // live Cloudflare session during local type-checking.
 interface CloudflareEnv {
+  [key: string]: unknown;
   DB: D1Database;
   FILES: R2Bucket;
   SESSIONS: KVNamespace;

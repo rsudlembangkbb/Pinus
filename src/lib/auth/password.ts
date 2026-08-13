@@ -25,7 +25,7 @@ async function deriveKey(password: string, salt: Uint8Array, iterations: number)
     'deriveBits'
   ]);
   return crypto.subtle.deriveBits(
-    { name: ALGO, salt, iterations, hash: 'SHA-256' },
+    { name: ALGO, salt: salt as BufferSource, iterations, hash: 'SHA-256' },
     keyMaterial,
     KEY_LENGTH_BITS
   );

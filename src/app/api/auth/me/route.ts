@@ -6,7 +6,7 @@ import { ROLE_LABELS, RoleCode } from '@/lib/auth/roles';
 
 export const GET = withApi(async (_req: NextRequest) => {
   const session = await requireSession();
-  const db = getDb();
+  const db = await getDb();
   const [user] = await db.select().from(schema.users).where(eq(schema.users.id, session.sub)).limit(1);
   if (!user) return jsonOk(null, 401);
 
