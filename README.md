@@ -8,6 +8,7 @@ Sistem Pembagian Insentif dan Jasa Pelayanan Untuk Semua untuk RSUD Lembang, dib
 - `apps/api`: NestJS 11, Prisma, PostgreSQL, PDFKit, ExcelJS
 - Database: PostgreSQL
 - Orkestrasi lokal: Docker Compose
+- Deploy frontend production: Cloudflare Workers via OpenNext
 
 ## Fitur MVP yang sudah dibangun
 
@@ -82,3 +83,8 @@ Password semua akun: `pinus123`
 - Nilai proporsi, bobot, minimum guarantee, dan aturan potongan diperlakukan sebagai parameter konfigurabel sesuai PRD.
 - Impor fase awal mengikuti berkas template, belum integrasi API langsung ke SIMRS.
 - Mesin kalkulasi sudah berjalan end-to-end, namun formula final RSUD tetap perlu penyesuaian angka resmi dari Keputusan Bupati/Direktur sebelum go-live produksi.
+
+## Deploy Cloudflare
+
+- Frontend Cloudflare sudah disiapkan di `apps/web` menggunakan `@opennextjs/cloudflare`.
+- Panduan deploy production lengkap ada di [DEPLOYMENT_CLOUDFLARE.md](file:///workspace/DEPLOYMENT_CLOUDFLARE.md).

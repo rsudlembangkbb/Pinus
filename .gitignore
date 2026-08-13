@@ -9,3 +9,6 @@ coverage
 apps/api/prisma/dev.db
 apps/api/generated
 tmp
+.open-next
+apps/web/.wrangler
+apps/web/.dev.vars
