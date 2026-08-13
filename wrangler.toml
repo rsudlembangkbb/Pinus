@@ -1,0 +1,65 @@
+name = "pinus"
+main = ".open-next/worker.js"
+compatibility_date = "2024-12-30"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+# ---------------------------------------------------------------------------
+# D1 database - primary data store for PINUS.
+# Create with: wrangler d1 create pinus-db
+# Then paste the returned database_id below.
+# ---------------------------------------------------------------------------
+[[d1_databases]]
+binding = "DB"
+database_name = "pinus-db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "drizzle/migrations"
+
+# ---------------------------------------------------------------------------
+# R2 bucket - raw import files (SIMRS/BPJS/BARAYA/Kinerja) + generated
+# slip/report archives.
+# Create with: wrangler r2 bucket create pinus-files
+# ---------------------------------------------------------------------------
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "pinus-files"
+
+# ---------------------------------------------------------------------------
+# KV - short-lived session/rate-limit cache (optional, JWT is self-contained
+# but KV lets us support server-side session revocation).
+# Create with: wrangler kv namespace create pinus-sessions
+# ---------------------------------------------------------------------------
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# ---------------------------------------------------------------------------
+# Queue - asynchronous processing for large monthly import batches so a
+# single Worker invocation never has to parse/validate thousands of rows
+# synchronously (see PRD section 11.4).
+# Create with: wrangler queues create pinus-import-queue
+# ---------------------------------------------------------------------------
+[[queues.producers]]
+binding = "IMPORT_QUEUE"
+queue = "pinus-import-queue"
+
+[[queues.consumers]]
+queue = "pinus-import-queue"
+max_batch_size = 25
+max_batch_timeout = 5
+
+[vars]
+APP_ENV = "development"
+APP_NAME = "PINUS - RSUD Lembang"
+
+[env.production]
+[env.production.vars]
+APP_ENV = "production"
+APP_NAME = "PINUS - RSUD Lembang"
+
+# JWT_SECRET, and any other secret values, are NOT set here - use:
+#   wrangler secret put JWT_SECRET
+# (see README.md "Deployment" section)
