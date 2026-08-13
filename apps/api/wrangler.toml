@@ -1,0 +1,67 @@
+name = "pinus-api"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# --- D1 database -----------------------------------------------------------
+# Create with: wrangler d1 create pinus-db
+# Then paste the returned database_id below (and in the [env.staging] block).
+[[d1_databases]]
+binding = "DB"
+database_name = "pinus-db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+# --- R2 bucket (raw import files, generated PDF/Excel archives) ------------
+# Create with: wrangler r2 bucket create pinus-files
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "pinus-files"
+
+# --- Secrets (set via `wrangler secret put <NAME>`, never committed) -------
+# JWT_ACCESS_SECRET   - HMAC secret for short-lived access tokens
+# JWT_REFRESH_SECRET  - HMAC secret for refresh tokens
+# APP_ENV             - "production" | "staging" | "development"
+
+[vars]
+APP_ENV = "development"
+ACCESS_TOKEN_TTL_SECONDS = "900"
+REFRESH_TOKEN_TTL_SECONDS = "604800"
+CORS_ORIGIN = "http://localhost:5173"
+
+[observability]
+enabled = true
+
+# --- Staging environment ----------------------------------------------------
+[env.staging]
+name = "pinus-api-staging"
+[env.staging.vars]
+APP_ENV = "staging"
+ACCESS_TOKEN_TTL_SECONDS = "900"
+REFRESH_TOKEN_TTL_SECONDS = "604800"
+CORS_ORIGIN = "https://staging.pinus-rsudlembang.pages.dev"
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "pinus-db-staging"
+database_id = "REPLACE_WITH_STAGING_D1_DATABASE_ID"
+migrations_dir = "migrations"
+[[env.staging.r2_buckets]]
+binding = "FILES"
+bucket_name = "pinus-files-staging"
+
+# --- Production environment -------------------------------------------------
+[env.production]
+name = "pinus-api-production"
+[env.production.vars]
+APP_ENV = "production"
+ACCESS_TOKEN_TTL_SECONDS = "900"
+REFRESH_TOKEN_TTL_SECONDS = "604800"
+CORS_ORIGIN = "https://pinus.rsudlembang.go.id"
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "pinus-db-production"
+database_id = "REPLACE_WITH_PRODUCTION_D1_DATABASE_ID"
+migrations_dir = "migrations"
+[[env.production.r2_buckets]]
+binding = "FILES"
+bucket_name = "pinus-files-production"

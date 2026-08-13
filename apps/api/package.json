@@ -1,0 +1,36 @@
+{
+  "name": "@pinus/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply pinus-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply pinus-db --remote",
+    "db:generate-seed": "node scripts/generate-seed.mjs > seed/seed.sql",
+    "db:seed:local": "wrangler d1 execute pinus-db --local --file=./seed/seed.sql",
+    "db:seed:remote": "wrangler d1 execute pinus-db --remote --file=./seed/seed.sql"
+  },
+  "dependencies": {
+    "@pinus/shared": "*",
+    "drizzle-orm": "^0.36.4",
+    "hono": "^4.6.14",
+    "jose": "^5.9.6",
+    "pdf-lib": "^1.17.1",
+    "xlsx": "^0.18.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "drizzle-kit": "^0.28.1",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8",
+    "wrangler": "^3.90.0"
+  }
+}
