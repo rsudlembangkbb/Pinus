@@ -65,8 +65,11 @@ export default function FieldForm({
             </>
           ) : f.type === 'select' ? (
             <>
-              <label className="label">{f.label}</label>
+              <label className="label" htmlFor={f.name}>
+                {f.label}
+              </label>
               <select
+                id={f.name}
                 className="input"
                 required={f.required}
                 value={(values[f.name] as string) ?? ''}
@@ -84,8 +87,11 @@ export default function FieldForm({
             </>
           ) : (
             <>
-              <label className="label">{f.label}</label>
+              <label className="label" htmlFor={f.name}>
+                {f.label}
+              </label>
               <input
+                id={f.name}
                 type={f.type}
                 className="input"
                 required={f.required}

@@ -6,6 +6,7 @@ import { ApiError, jsonError, jsonOk, requireSession, withApi } from '@/lib/http
 import { ROLES } from '@/lib/auth/roles';
 import { writeAuditLog } from '@/lib/audit';
 import { notifyRole } from '@/lib/notify';
+import { canDecideStepAtPeriodStatus } from '@/domain/workflow/approval-sequence';
 
 const bodySchema = z.object({
   decision: z.enum(['approved', 'rejected']),
@@ -25,6 +26,13 @@ export const POST = withApi(async (req: NextRequest, { params }: { params: Promi
 
   const [period] = await db.select().from(schema.calculationPeriods).where(eq(schema.calculationPeriods.id, resolvedParams.id)).limit(1);
   if (!period) return jsonError('Periode tidak ditemukan.', 404);
+
+  if (!canDecideStepAtPeriodStatus(step.stepType, period.status)) {
+    return jsonError(
+      `Tahap ini belum dapat diputuskan - periode sedang berstatus "${period.status}", menunggu tahap sebelumnya selesai terlebih dahulu.`,
+      409
+    );
+  }
 
   authorizeStep(session, step);
 

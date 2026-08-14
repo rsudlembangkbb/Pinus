@@ -49,6 +49,27 @@ export function requireRole(session: SessionPayload, allowed: RoleCode[]) {
   }
 }
 
+const UNIQUE_FIELD_LABELS: Record<string, string> = {
+  'work_units.code': 'Kode unit kerja',
+  'job_grades.code': 'Kode job grade',
+  'deduction_rules.code': 'Kode aturan potongan',
+  'employees.nip': 'NIP',
+  'users.username': 'Username',
+  'users.email': 'Email',
+  'calculation_periods.code': 'Kode periode',
+  'employee_identity_mappings.source_system, employee_identity_mappings.external_code': 'Kombinasi sistem sumber + kode eksternal'
+};
+
+/** Extracts a human-readable message from a D1/SQLite UNIQUE constraint violation, or null if the error isn't one. */
+function describeUniqueConstraintError(err: unknown): string | null {
+  const message = err instanceof Error ? (err.cause instanceof Error ? err.cause.message : err.message) : String(err);
+  const match = message.match(/UNIQUE constraint failed: ([\w., ]+)/);
+  if (!match) return null;
+  const field = match[1]!.trim();
+  const label = UNIQUE_FIELD_LABELS[field] ?? field;
+  return `${label} sudah digunakan - silakan gunakan nilai lain.`;
+}
+
 /** Wraps a route handler with uniform error -> JSON translation. */
 export function withApi(handler: (req: NextRequest, ctx: any) => Promise<NextResponse>) {
   return async (req: NextRequest, ctx: any) => {
@@ -57,6 +78,10 @@ export function withApi(handler: (req: NextRequest, ctx: any) => Promise<NextRes
     } catch (err) {
       if (err instanceof ApiError) {
         return jsonError(err.message, err.status);
+      }
+      const uniqueMessage = describeUniqueConstraintError(err);
+      if (uniqueMessage) {
+        return jsonError(uniqueMessage, 409);
       }
       console.error('Unhandled API error', err);
       return jsonError('Terjadi kesalahan pada server.', 500);
