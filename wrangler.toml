@@ -1,0 +1,67 @@
+name = "pinus"
+main = ".open-next/worker.js"
+compatibility_date = "2025-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+# ---------------------------------------------------------------------------
+# D1 database - primary data store for PINUS.
+# Create with: wrangler d1 create pinus-db
+# Then paste the returned database_id below.
+# ---------------------------------------------------------------------------
+[[d1_databases]]
+binding = "DB"
+database_name = "pinus-db"
+database_id = "ba39c36d-2d31-4f37-9aa5-3c2b7bbe9d75"
+migrations_dir = "drizzle/migrations"
+
+# ---------------------------------------------------------------------------
+# R2 bucket - raw import files (SIMRS/BPJS/BARAYA/Kinerja) + generated
+# slip/report archives.
+# Create with: wrangler r2 bucket create pinus-files
+# ---------------------------------------------------------------------------
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "pinus-files"
+
+# ---------------------------------------------------------------------------
+# KV - short-lived session/rate-limit cache (optional, JWT is self-contained
+# but KV lets us support server-side session revocation).
+# Create with: wrangler kv namespace create pinus-sessions
+# ---------------------------------------------------------------------------
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "da5c02c8bb254fe8afa6689bbdfee289"
+
+# ---------------------------------------------------------------------------
+# Queue - asynchronous processing for large monthly import batches so a
+# single Worker invocation never has to parse/validate thousands of rows
+# synchronously (see PRD section 11.4). NOT YET CREATED and not referenced
+# by any application code path yet (imports are handled synchronously).
+# When this becomes needed: `wrangler queues create pinus-import-queue`,
+# then re-add the [[queues.producers]] / [[queues.consumers]] blocks below.
+# ---------------------------------------------------------------------------
+# [[queues.producers]]
+# binding = "IMPORT_QUEUE"
+# queue = "pinus-import-queue"
+#
+# [[queues.consumers]]
+# queue = "pinus-import-queue"
+# max_batch_size = 25
+# max_batch_timeout = 5
+
+[vars]
+APP_ENV = "development"
+APP_NAME = "PINUS - RSUD Lembang"
+
+[env.production]
+[env.production.vars]
+APP_ENV = "production"
+APP_NAME = "PINUS - RSUD Lembang"
+
+# JWT_SECRET, and any other secret values, are NOT set here - use:
+#   wrangler secret put JWT_SECRET
+# (see README.md "Deployment" section)

@@ -1,0 +1,18 @@
+node_modules/
+.next/
+.vercel/
+.wrangler/
+out/
+dist/
+*.log
+.env
+.env*.local
+.DS_Store
+coverage/
+*.tsbuildinfo
+.dev.vars
+.open-next/
+
+# Generated locally by scripts/generate-seed.mjs - contains a freshly hashed
+# bootstrap admin password; never commit a real deployment's seed data.
+drizzle/seed.sql
