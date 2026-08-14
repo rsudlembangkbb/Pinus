@@ -15,7 +15,7 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "pinus-db"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "ba39c36d-2d31-4f37-9aa5-3c2b7bbe9d75"
 migrations_dir = "drizzle/migrations"
 
 # ---------------------------------------------------------------------------
@@ -34,22 +34,24 @@ bucket_name = "pinus-files"
 # ---------------------------------------------------------------------------
 [[kv_namespaces]]
 binding = "SESSIONS"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "da5c02c8bb254fe8afa6689bbdfee289"
 
 # ---------------------------------------------------------------------------
 # Queue - asynchronous processing for large monthly import batches so a
 # single Worker invocation never has to parse/validate thousands of rows
-# synchronously (see PRD section 11.4).
-# Create with: wrangler queues create pinus-import-queue
+# synchronously (see PRD section 11.4). NOT YET CREATED and not referenced
+# by any application code path yet (imports are handled synchronously).
+# When this becomes needed: `wrangler queues create pinus-import-queue`,
+# then re-add the [[queues.producers]] / [[queues.consumers]] blocks below.
 # ---------------------------------------------------------------------------
-[[queues.producers]]
-binding = "IMPORT_QUEUE"
-queue = "pinus-import-queue"
-
-[[queues.consumers]]
-queue = "pinus-import-queue"
-max_batch_size = 25
-max_batch_timeout = 5
+# [[queues.producers]]
+# binding = "IMPORT_QUEUE"
+# queue = "pinus-import-queue"
+#
+# [[queues.consumers]]
+# queue = "pinus-import-queue"
+# max_batch_size = 25
+# max_batch_timeout = 5
 
 [vars]
 APP_ENV = "development"
