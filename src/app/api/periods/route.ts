@@ -13,7 +13,7 @@ const createSchema = z.object({
   label: z.string().min(4),
   startDate: z.string().min(4),
   endDate: z.string().min(4),
-  bpjsPendingPolicy: z.enum(['accrual', 'cash', 'hybrid']).default('accrual'),
+  bpjsPendingPolicy: z.enum(['accrual', 'cash', 'hybrid']).default('cash'),
   jaspelBudgetCap: z.number().int().positive().optional(),
   administrationAllocation: z.number().int().positive().optional(),
   teamUnitProportionPercent: z.number().min(0).max(100).default(30),

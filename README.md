@@ -114,9 +114,9 @@ npm run cf:build         # Bundle Workers via OpenNext (validasi kompatibilitas 
 
 Sesuai catatan PRD, hal-hal berikut **bukan keputusan teknis** dan wajib ditetapkan resmi sebelum sistem digunakan untuk produksi:
 
-1. Nilai final persentase proporsi Jaspel per unit/peran (Keputusan Bupati/Direktur) — nilai di `scripts/generate-seed.mjs` hanya titik tengah rentang acuan nasional Kepdirjen Yankes, **bukan angka resmi RSUD Lembang**.
-2. Kebijakan basis perhitungan klaim BPJS pending: akrual vs kas vs hibrida (PRD §9.6).
-3. Struktur organisasi alur persetujuan (apakah Tim Remunerasi = tim lintas unit sesuai Perbup, atau unit internal RSUD).
+1. **[SUDAH DIPUTUSKAN]** Kebijakan basis perhitungan klaim BPJS pending: **Basis Kas** (Opsi B, PRD §9.6) — Jaspel komponen JKN hanya dihitung dari klaim yang sudah berstatus `dicairkan`; klaim `pending`/`diajukan`/`diverifikasi` bernilai nol pada periode berjalan dan baru masuk perhitungan begitu BPJS merilis laporan pencairannya (yang diimpor sebagai data klaim periode tersebut). Ini sudah menjadi nilai **default** setiap periode baru, namun tetap dapat diganti per periode (akrual/hibrida) dari formulir "Buka Periode Baru" bila suatu saat diperlukan.
+2. Nilai final persentase proporsi Jaspel per unit/peran (Keputusan Bupati/Direktur) — nilai di `scripts/generate-seed.mjs` hanya titik tengah rentang acuan nasional Kepdirjen Yankes sebagai **starting point**, **bukan angka resmi RSUD Lembang**. Nilai ini **dapat diubah kapan saja** melalui menu **Unit Kerja → Skema Proporsi** (`/master/proportion-schemes`) tanpa menyentuh kode — setiap perubahan otomatis tersimpan sebagai versi baru bertanggal efektif, sehingga hasil perhitungan periode-periode lama tidak ikut berubah saat persentase direvisi di kemudian hari.
+3. **[SUDAH DIPUTUSKAN]** Alur persetujuan berjenjang: **Verifikator Unit/Kepala Instalasi → Bagian Keuangan → Direktur** (sesuai yang sudah diimplementasikan — lihat bagian "Alur Kerja Aplikasi" di atas).
 4. Struktur ekspor data aktual dari SIMRS RSUD Lembang (kolom, format) untuk disesuaikan dengan template impor bila berbeda.
 
 ## Lisensi Data

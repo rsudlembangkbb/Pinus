@@ -3,9 +3,17 @@
 import { FormEvent, useState } from 'react';
 
 export type FieldDef =
-  | { name: string; label: string; type: 'text' | 'number' | 'date'; required?: boolean; placeholder?: string }
-  | { name: string; label: string; type: 'select'; required?: boolean; options: { value: string; label: string }[] }
-  | { name: string; label: string; type: 'checkbox' };
+  | { name: string; label: string; type: 'text' | 'number' | 'date'; required?: boolean; placeholder?: string; defaultValue?: string | number }
+  | { name: string; label: string; type: 'select'; required?: boolean; options: { value: string; label: string }[]; defaultValue?: string }
+  | { name: string; label: string; type: 'checkbox'; defaultValue?: boolean };
+
+function initialValues(fields: FieldDef[]): Record<string, unknown> {
+  const values: Record<string, unknown> = {};
+  for (const f of fields) {
+    if (f.defaultValue !== undefined) values[f.name] = f.defaultValue;
+  }
+  return values;
+}
 
 export default function FieldForm({
   fields,
@@ -16,7 +24,7 @@ export default function FieldForm({
   onSubmit: (values: Record<string, unknown>) => Promise<void>;
   submitLabel?: string;
 }) {
-  const [values, setValues] = useState<Record<string, unknown>>({});
+  const [values, setValues] = useState<Record<string, unknown>>(() => initialValues(fields));
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +38,7 @@ export default function FieldForm({
     setLoading(true);
     try {
       await onSubmit(values);
-      setValues({});
+      setValues(initialValues(fields));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal menyimpan.');
     } finally {

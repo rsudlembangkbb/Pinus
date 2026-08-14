@@ -69,13 +69,32 @@ export default function PeriodsPage() {
                 label: 'Kebijakan Klaim BPJS Pending',
                 type: 'select',
                 required: true,
+                defaultValue: 'cash',
                 options: BPJS_PENDING_POLICIES.map((p) => ({ value: p.value, label: p.label }))
               },
               { name: 'jaspelBudgetCap', label: 'Pagu Insentif Kinerja (Rp, opsional)', type: 'number' },
               { name: 'administrationAllocation', label: 'Alokasi Insentif Administrasi (Rp)', type: 'number' },
-              { name: 'teamUnitProportionPercent', label: 'Proporsi Pool Tim Kesehatan (%)', type: 'number', placeholder: '30' },
-              { name: 'teamUnitFixedPortionPercent', label: 'Porsi Tetap dalam Unit (%)', type: 'number', placeholder: '20' },
-              { name: 'hybridDiscountPercent', label: 'Diskon Estimasi Hibrida BPJS (%)', type: 'number', placeholder: '80' }
+              {
+                name: 'teamUnitProportionPercent',
+                label: 'Proporsi Pool Tim Kesehatan (%)',
+                type: 'number',
+                placeholder: '30',
+                defaultValue: 30
+              },
+              {
+                name: 'teamUnitFixedPortionPercent',
+                label: 'Porsi Tetap dalam Unit (%)',
+                type: 'number',
+                placeholder: '20',
+                defaultValue: 20
+              },
+              {
+                name: 'hybridDiscountPercent',
+                label: 'Diskon Estimasi Hibrida BPJS (%)',
+                type: 'number',
+                placeholder: '80',
+                defaultValue: 80
+              }
             ]}
             onSubmit={async (values) => {
               await api.post('/api/periods', values);

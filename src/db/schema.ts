@@ -185,7 +185,7 @@ export const calculationPeriods = sqliteTable(
     status: text('status').notNull().default('draft'),
     // draft -> importing -> ready_to_calculate -> calculated -> verifying_unit ->
     // verifying_keuangan -> verifying_direktur -> approved -> published -> locked
-    bpjsPendingPolicy: text('bpjs_pending_policy').notNull().default('accrual'), // accrual|cash|hybrid
+    bpjsPendingPolicy: text('bpjs_pending_policy').notNull().default('cash'), // accrual|cash|hybrid - RSUD Lembang menggunakan basis kas (Jaspel dibagikan sesuai klaim yang cair)
     jaspelBudgetCap: integer('jaspel_budget_cap'),
     administrationAllocation: integer('administration_allocation'),
     teamUnitProportionBps: integer('team_unit_proportion_bps').notNull().default(3000),
