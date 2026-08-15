@@ -84,7 +84,8 @@ export function withApi(handler: (req: NextRequest, ctx: any) => Promise<NextRes
         return jsonError(uniqueMessage, 409);
       }
       console.error('Unhandled API error', err);
-      return jsonError('Terjadi kesalahan pada server.', 500);
+      const debugDetail = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+      return jsonError(`Terjadi kesalahan pada server. [DEBUG ${debugDetail}]`, 500);
     }
   };
 }
