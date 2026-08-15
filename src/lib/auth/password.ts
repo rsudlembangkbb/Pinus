@@ -8,7 +8,10 @@
  * CPU budgets for a login request.
  */
 
-const ITERATIONS = 210_000;
+// Cloudflare Workers' WebCrypto PBKDF2 implementation caps iterations at
+// 100,000 (throws NotSupportedError above that) - unlike Node.js/browsers,
+// which allow much higher counts. This is the max the runtime supports.
+const ITERATIONS = 100_000;
 const KEY_LENGTH_BITS = 256;
 const ALGO = 'PBKDF2';
 

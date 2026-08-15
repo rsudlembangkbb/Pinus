@@ -13,7 +13,8 @@ import { webcrypto } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 
 const crypto = webcrypto;
-const ITERATIONS = 210_000;
+// Must match src/lib/auth/password.ts - Cloudflare Workers' PBKDF2 caps at 100,000 iterations.
+const ITERATIONS = 100_000;
 
 function toBase64(bytes) {
   return Buffer.from(bytes).toString('base64');
